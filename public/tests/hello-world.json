@@ -1,0 +1,33 @@
+{
+    "name": "hello-world.json",
+    "content": [
+        "public class Main {",
+        "    public static void main(String[] args) {",
+        "        System.out.println(\"Hello World!\");",
+        "    }",
+        "",
+        "    public static int add(int a, int b) {",
+        "        I am a text that isn't supposed to be here",
+        "        return a + b",
+        "    }",
+        "",
+        "    public static int subtract(int a, int b) {",
+        "        return a - b;",
+        "    }",
+        "",
+        "    public static int multiply(int a, int b) {",
+        "        return a * b;",
+        "    }",
+        "",
+        "    public static int divide(int a, int b) {",
+        "        return a / b;",
+        "    }",
+        "}"
+    ],
+    "errors": [
+        6, 7
+    ],
+    "warnings": [
+        2
+    ]
+}
