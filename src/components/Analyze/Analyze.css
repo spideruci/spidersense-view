@@ -1,0 +1,133 @@
+/* ============================================================================
+ * Base
+============================================================================ */
+.analyze {
+    background-color: #f2f2f2;
+    min-height: 100vh;
+    padding: 24px;
+}
+.selectedContainer {
+    background-color: #E9E9E9;
+}
+.slider-rect {
+    fill: #000;
+    opacity: 0.1;
+    cursor: pointer;
+}
+
+/* ============================================================================
+ * Horizontal Scroll View
+============================================================================ */
+#horizontalScrollView {
+    background-color: #FFFFFF;
+    display: flex;
+    overflow-x: scroll;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+#canvasHorizontalScrollView {
+    border: 1px dashed orange;
+}
+#canvasHorizontalScrollView canvas {
+    display: block;
+}
+    /* ============================================================================
+    * File Container
+    ============================================================================ */
+    .fileContainer {
+        background-color: #FFFFFF;
+        padding: 24px 12px;
+    }
+    .fileContainer:hover {
+        background-color: #E9E9E9;
+        cursor: pointer;
+    }
+        /* ============================================================================
+        * File Title
+        ============================================================================ */
+        .fileContainer > div:nth-of-type(1) > p {
+            font-size: 1.0rem;
+            font-weight: bold;
+            margin: 12px;
+        }
+    
+        /* ============================================================================
+        * Minimap 
+        ============================================================================ */ 
+        .svgContainer {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin: 12px;
+        }
+            .svgContainer > div {
+                /* width: 96px; */
+                margin-right: 6px;
+                /* border: 1px dashed; */
+                /* overflow: hidden; */
+            }
+                .svgContainer > div > svg > text {
+                    /* white-space: pre; */
+                }
+                    .svgContainer > div > svg > text > tspan {
+                        display: block;
+                    }
+
+/* ============================================================================
+ * Display Scroll View
+============================================================================ */
+#displayScrollView {
+    background-color: #FFFFFF;
+    margin: 24px 0px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+    /* .fileInfoHeader {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+        .fileInfoHeader > div {
+            margin: 0px 24px;
+        }
+            .fileInfoHeader > div > p:nth-of-type(1) {
+                color: #404040;
+                font-size: 1.5rem;
+            }
+            .fileInfoHeader > div > p:nth-of-type(2) {
+                color: #666666;
+                font-size: 1.2rem;
+            }
+.error {
+    color: white;
+    background-color: red;
+}
+.warning {
+    color: white;
+    background-color: orange;
+}  */
+
+
+.benchmark {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+}
+    .benchmark button {
+        display: block;
+        width: 30%;
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        padding: 12px 32px;
+        text-align: center;
+        text-decoration: none;
+        /* display: inline-block; */
+        font-size: 12px;
+    }
+    .benchmark button:hover {
+        cursor: pointer;
+    }

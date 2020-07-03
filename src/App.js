@@ -3,11 +3,11 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 
 
 // import logo from './logo.svg';
-import Error from "./components/Error";
-import Drawer from "./components/Drawer";
-import Home from "./components/Home";
-import List from "./components/List"
-import Analyze from "./components/Analyze";
+import Error from "./components/Error/Error";
+import Drawer from "./components/Drawer/Drawer";
+import Home from "./components/Home/Home";
+import List from "./components/List/List"
+import Analyze from "./components/Analyze/Analyze";
 
 import './App.css';
 
@@ -19,7 +19,6 @@ class App extends Component {
      ======================================================================= */
     constructor(props) {
         super(props);
-        // this.state = { messages: [] }; // set up react state
     } 
 
 
