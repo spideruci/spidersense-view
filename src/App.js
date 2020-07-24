@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 
-
 // import logo from './logo.svg';
 import Error from "./components/Error/Error";
 import Drawer from "./components/Drawer/Drawer";
 import Home from "./components/Home/Home";
 import List from "./components/List/List"
-import Analyze from "./components/Analyze/Analyze";
+import Project from "./components/Project/Project";
 
 import './App.css';
 
@@ -38,7 +37,7 @@ class App extends Component {
                         <Switch>
                             <Route path="/" component={ Home } exact />
                             <Route path="/list" component={ List } />
-                            <Route path="/project" component={ Analyze } />
+                            <Route path="/project" component={ Project } />
                             <Route component={ Error } />
                         </Switch>
                     </div>

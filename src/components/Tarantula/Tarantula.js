@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 import * as d3 from 'd3';
 import Request from '../../network/request';
 import FileNameParser from '../../util/file-name-parser';
-import CoverageMatrixAdapter from '../../network/coverage-matrix-adapter';
+// import CoverageMatrixAdapter from '../../network/coverage-matrix-adapter';
+import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
 
-import "./Analyze.css";
+import "./Tarantula.css";
 
-
-class Analyze extends React.Component {
+class Tarantula extends Component {
     /** =======================================================================
      * 
      * LIFECYCLE
@@ -24,8 +24,8 @@ class Analyze extends React.Component {
             numberOfSvgs: 0,
             minimapMaxHeights: [],
             scrollContainerHeight: 0,
-            adapter: null,
-            activatingTests: []
+            adapters: [],
+            // activatingTests: []
         };
 
         // Constants
@@ -36,19 +36,22 @@ class Analyze extends React.Component {
         this.SVG_MAX_HEIGHT = 300;     // Height of each minimap
         this.PIXELS_PER_LINE = this.FONT_SIZE + this.Y_TEXT_PADDING;    // # of pixels making up 1 line
         this.LINES_PER_SVG = Math.floor(this.SVG_MAX_HEIGHT / this.PIXELS_PER_LINE);
-        this.TABLE_BODY_WIDTH = 800;
+        this.TABLE_BODY_WIDTH = 700;
         this.SCROLL_FONT_SIZE = 12;
         this.SCROLL_CONTAINER_PADDING = 12;
 
         // Bind methods
         this.loadAllFiles = this.loadAllFiles.bind(this);
+
+        this.generateDirectoryContainer = this.generateDirectoryContainer.bind(this);
+        this.onSourceNameChecked = this.onSourceNameChecked.bind(this);
+
         this.generateFileContainers = this.generateFileContainers.bind(this);
         this.generateMinimap = this.generateMinimap.bind(this);
         this.updateSelection = this.updateSelection.bind(this);
         this.generateSlider = this.generateSlider.bind(this);
         this.generateDisplay = this.generateDisplay.bind(this);
 
-        // this.handleCoverageChange = this.handleCoverageChange.bind(this);
         this.loadCoverageData = this.loadCoverageData.bind(this);
         this.displayCoverage = this.displayCoverage.bind(this);
         this.displaySelectedCoverage = this.displaySelectedCoverage.bind(this);
@@ -76,13 +79,15 @@ class Analyze extends React.Component {
             // process.env.PUBLIC_URL + "/tests/hello-world.txt",
             // process.env.PUBLIC_URL + "/tests/pride-and-prejudice.txt"
             // process.env.PUBLIC_URL + "/tests/Botm2.java",
-            // 'https://mdn.github.io/learning-area/javascript/oojs/json/superheroes.json'
             process.env.PUBLIC_URL + "/tarantula/PassFailPair.java",
             process.env.PUBLIC_URL + "/tarantula/Tarantula.java",
             process.env.PUBLIC_URL + "/tarantula/TarantulaData.java",
             process.env.PUBLIC_URL + "/tarantula/TarantulaDataBuilder.java",
             process.env.PUBLIC_URL + "/tarantula/TarantulaFaultLocalizer.java",
         ];
+
+        // Generate directory contianer
+        this.generateDirectoryContainer();
 
         // Generate file container
         this.generateFileContainers(files.length);
@@ -107,6 +112,129 @@ class Analyze extends React.Component {
             console.log("Successfully processed all responses");
         });
     }
+
+    /** =======================================================================
+     * 
+     * METHODS - Directory View
+     * 
+     ======================================================================= */
+    generateDirectoryContainer() {
+        // TODO: get actual from new queries after
+        this.tempData = {
+            tests: [
+                {
+                    sourceName: "[runner:org.spideruci.tarantula.TestDataBuilder]",
+                    testcases: [
+                        {
+                            testcaseId: 10343,
+                            signature: "[test:expectThereToBeNoFailingTestsInData_When_ZeroTestsAndStmts(org.spideruci.tarantula.TestDataBuilder)]"
+                        },
+                        {
+                            testcaseId: 10344,
+                            signature: "[test:canHandleNulls(org.spideruci.tarantula.TestDataBuilder)]"
+                        },
+                        {
+                            testcaseId: 10345,
+                            signature: "[test:expectThereToBeNoFailingTestsInData_When_NonZeroTestsAndStmts(org.spideruci.tarantula.TestDataBuilder)]"
+                        }
+                    ]
+                },
+                {
+                    sourceName: "[runner:org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt]",
+                    testcases: [
+                        {
+                            testcaseId: 10346,
+                            signature: "[test:expect_AllFailOnStmtsZero_When_AllPassingTests_AllTestsLiveGood_AllStmtsCovered(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
+                        },
+                        {
+                            testcaseId: 10347,
+                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllLiveGoodTests_And_AllCovbleStmts_And_NoStmtCovered(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
+                        },
+                        {
+                            testcaseId: 10348,
+                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllTestsAreLive_And_AllTestsAreBad(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
+                        },
+                        {
+                            testcaseId: 10349,
+                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllLiveGoodTests_And_NoCovbleStmts(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
+                        },
+                        {
+                            testcaseId: 10350,
+                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllTestsAreDead_And_ZeroTestsAreBad(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
+                        },
+                    ]
+                }
+            ]
+        };
+
+        let sourceNames = this.tempData.tests.map((d) => {return d.sourceName});
+        console.log("Printing source names: " + sourceNames);
+
+        let tests = d3.select("#directoryContainer")
+            .selectAll("div")
+            .data(this.tempData.tests)
+            .enter()
+            .append("div")
+            .classed("directoryTests sourceName", true);
+        
+        let testsCheckContainer = tests.append("div")
+            .classed("directoryCheckboxLabel", true);
+        testsCheckContainer.append("input")
+            .attr("type", "checkbox")
+            .attr("key", function(t) {return t.sourceName});
+        testsCheckContainer.append("label")
+            .text(function(t) {return t.sourceName});
+
+        let testCases = tests.append("div")
+            .classed("directoryTestCases", true)
+            .selectAll("div")
+            .data(function(t) {return t.testcases})
+            .enter()
+            .append("div")
+            .classed("directoryCheckboxLabel testCase", true);
+        testCases.append("input")
+            .attr("type", "checkbox")
+            .attr("key", function(t) {return t.testcaseId});
+        testCases.append("label")
+            .text(function(t) {return t.signature});
+
+        d3.selectAll(".sourceName input")
+            .on('click', () => {
+                this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
+            });
+        d3.selectAll(".testCase input")
+            .on('click', () => {
+                this.onTestCaseChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
+            });
+    }
+
+    onSourceNameChecked(sourceName, checked) {
+        console.log("onSourceNameChecked(): sourcename: " + sourceName + " checked: " + checked);
+        let testCases = this.tempData.tests.filter((t) => {
+            return t.sourceName === sourceName;
+        })[0].testcases.map((tc) => {
+            return tc.testcaseId;
+        });
+        console.log("test cases: " + testCases);
+
+        let allTestCheckboxes = d3.selectAll(".testCase")
+            .select("input").nodes();
+
+        for (let i = 0; i < allTestCheckboxes.length; i++) {
+            let key = allTestCheckboxes[i].getAttribute("key");
+            if (testCases.includes(parseInt(key, 10))) {
+                allTestCheckboxes[i].checked = checked;
+            }
+        }
+
+        this.loadCoverageData();
+    }
+
+    onTestCaseChecked(testCaseId, checked) {
+        console.log("onTestCaseChecked(): testCaseId: " + testCaseId + " checked: " + checked);
+        this.loadCoverageData();
+    }
+
 
     /**
      * Retrieves the response from the request object, processes the response
@@ -154,12 +282,12 @@ class Analyze extends React.Component {
     generateFileContainers(numFiles) {
         console.log("Generating file containers...");
 
-        let horizontalView = document.getElementById("horizontalScrollView");
-
+        let horizontalScollViewD3 = d3.select("#horizontalScrollView")
+            .style("width", this.TABLE_BODY_WIDTH + "px");
+        
         for (let i = 0; i < numFiles; i++) {
-            let fileContainer = document.createElement('div');
-            fileContainer.classList.add('fileContainer');
-            horizontalView.appendChild(fileContainer);
+            horizontalScollViewD3.append("div")
+                .classed('fileContainer', true);
         }
     }
 
@@ -301,9 +429,9 @@ class Analyze extends React.Component {
         d3.select("#scrollContainer").selectAll("*").remove();
 
         let table = d3.select("#scrollContainer")
-            .append("table");
+            .append("table")
+            .attr('width', this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2));
         let tablebody = table
-            .attr('width', this.TABLE_BODY_WIDTH)
             .append("tbody");
 
         // Add # of table rows matching # of lines
@@ -596,93 +724,106 @@ class Analyze extends React.Component {
      * Load the json file pertaining to the coverage data
      */
     loadCoverageData() {
-        let file = process.env.PUBLIC_URL + "/tests/b589f83a9c6bb3631e8c796848c309c2a677b2a8-cov-matrix.json";
+        this.removeExistingCoverage();
 
-        let activatedTest = document.querySelector("#coverageInput > div > div > input").value;
-        if (activatedTest == null || isNaN(parseInt(activatedTest, 10)) ) {
-            console.error("Can't load coverage data");
-            return;
-        }
-        console.log("Input value: " + activatedTest);
+        let activatedTestCases = d3.selectAll(".testCase")
+            .select("input")
+            .nodes()
+            .filter((n) => {
+                return n.checked;
+            })
+            .map((n) => {
+                return n.getAttribute("key");
+            });
+        
+        console.log("Activated tests: " + activatedTestCases);
+
+        // TODO: Getting a cors request error
+        // Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://127.0.0.1:5000/sourceCoverage/org.spideruci.tarantula.TarantulaDataBuilder.java. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing).
+        // let file = "http://127.0.0.1:5000/sourceCoverage/org.spideruci.tarantula.TarantulaDataBuilder.java";
+        // let file =  process.env.PUBLIC_URL + "/tests/test-case.json"; // test-case id: 10343
+
+        // Create Request object to handle requests
+        // let req = new Request();
+        // let promise = req.prepareSingleRequest(file, 'json');
+        // promise.then((value) => {
+        //     this.displayCoverage(value, testCaseId);
+        //     console.log("Successfully processed response");
+        // });
+        let files = activatedTestCases.map((t) => {
+            return process.env.PUBLIC_URL + "/tests/test-case-" + t.toString() + ".json";
+        });
 
         // Create Request object to handle requests
         let req = new Request();
-        let promise = req.prepareSingleRequest(file, 'json');
+        let promisesArr;
+        try {
+            promisesArr = req.prepareRequest(files, 'json');
+        } catch(err) {
+            console.err(err);
+            return;
+        }
 
-        promise.then((value) => {
-            this.displayCoverage(value, parseInt(activatedTest, 10));
+        // Process each response only when all requests complete
+        Promise.all(promisesArr).then((values) => {
+            for (let i = 0; i < values.length; i++) {
+                console.log("Request #" + i + ":\n" + values[i]);
+                this.displayCoverage(values[i], activatedTestCases[i]);
+                // this.processResponse(values[i], i);
+            }
 
-            console.log("Successfully processed response");
+            console.log("Successfully processed all responses");
         });
     }
 
     /**
-     * Display coverage for the activating test number. This number is an index to the 
-     * testsIndex array, which maps to the test method that has "activated" or covered
-     * lines of the source code.
-     * @param {Object} request              The request object containing coverage data
-     * @param {number} activatingTestNumber The test method to display coverage for
+     * Display coverage for the test case (using testcaseid). Go through each entry in the
+     * coverage map, find the file container associated with it, and highlight covered lines.
+     * @param {Object} request    The request object containing coverage data
+     * @param {number} testCaseId The test case id to display coverage for
      */
-    displayCoverage(request, activatingTestNumber) {
-        let adapter = new CoverageMatrixAdapter(request.response);
-        let parser = new FileNameParser();
+    displayCoverage(request, testCaseId) {
+        // this.removeExistingCoverage();
 
-        // Go through each source, store source only if activating test number is part of 
-        // activatingTests.
-        let activatedSources = adapter.filterSourcesByActivatingTest(activatingTestNumber);
-        if (activatedSources.length === 0) {
-            return;
+        let parser = new FileNameParser();
+        let adapter = new TestcaseCoverageAdapter(testCaseId, request.response);
+        let coverageMap = adapter.getLineCoverageByFile();
+        for (let [key, value] of coverageMap.entries()) {
+            console.log(key + ' = ' + value)
         }
 
-         // For each activated source, get testStmtArr using activatingTestNumber on matrix,
-         // find file container index via name, and add rects for covered lines
-        for (let src of activatedSources) {
-            let srcFullName = src.source.fullName;
-            let srcExtractName = parser.extractFileName(srcFullName);
-            let srcFirstLine = src.source.firstLine;
-
-            let matrixIndex = src.activatingTests.findIndex((val) => {
-                return val === activatingTestNumber;
-            });
-
-            let testStmtArr = src.testStmtMatrix[matrixIndex];
-            let testStmtArrLength = testStmtArr.length;
-
+        // For each entry in the map, get the matching file container index,
+        // and add rects for each line that is covered.
+        for (let [key, value] of coverageMap.entries()) {
             let fileContainerIndex = this.state.allFiles.findIndex((val) => {
-                return (srcExtractName === parser.extractFileName(val.name));
+                return (key === parser.extractFileName(val.name));
             });
 
             let svgsD3 = d3.selectAll(".fileContainer")
                 .filter(function(d, i) {return i === fileContainerIndex})
                 .selectAll(".svgContainer > div > svg");
-            
-            console.log("srcFullName: " + srcFullName
-                + "\nsrc extract name: " + srcExtractName
-                + "\nmatrix index: " + matrixIndex
+        
+            console.log("src extract name: " + key
                 + "\nfile container index: " + fileContainerIndex
                 + "\nsvgsD3 lengths: " + svgsD3.nodes().length);
             
-            for (let i = 0; i < testStmtArrLength; i++) {
-                if (!testStmtArr[i]) {
-                    continue;
-                }
-
-                let svgNumber = Math.floor((i + srcFirstLine - 1) / this.LINES_PER_SVG);
+            for (let i = 0; i < value.length; i++) {
+                let svgNumber = Math.floor((value[i] - 1) / this.LINES_PER_SVG);
 
                 svgsD3.filter(function(d, f) {return f === svgNumber})
                     .append("rect")
                     .attr("width", this.SVG_WIDTH)
                     .attr("height", this.PIXELS_PER_LINE)
                     .attr("x", 0)
-                    .attr("y", this.PIXELS_PER_LINE * ((i + srcFirstLine - 1) % this.LINES_PER_SVG ))
+                    .attr("y", this.PIXELS_PER_LINE * ((value[i] - 1) % this.LINES_PER_SVG ))
                     .classed("coverable", true);
             }
         }
 
         // Update state with adapter and activating test
         this.setState((state) => ({
-            adapter: adapter,
-            activatingTests: [activatingTestNumber]
+            adapters: state.adapters.concat(adapter),
+            // activatingTests: [testCaseId]
         }));
 
         // Display coverage in scroll container
@@ -698,27 +839,30 @@ class Analyze extends React.Component {
         if (this.state.selectionIndex === -1) {
             return;
         }
-        if (this.state.adapter == null) {
+        if (this.state.adapters == null) {
             return;
         }
 
-        // Get activating test and file name of selection index
-        let activatingTestNumber = this.state.activatingTests[0];
         let fileName = this.state.allFiles[this.state.selectionIndex].name;
+        let parser = new FileNameParser();
+        let extractedFileName = parser.extractFileName(fileName);
+
+        let coverageMap = this.state.adapters[0]
+            // .filter((a) => {
+            //     return a.testCaseId ===
+            // })
+            .getLineCoverageByFile();
+
+        let coveredLines = coverageMap.get(extractedFileName);
+        if (coveredLines == undefined) {
+            console.error("Couldn't retrieve extracted file name from adapter");
+            console.log("filename: " + fileName 
+                + "\nextracted file name: " + extractedFileName);
+            return;
+        }
 
         // Find source in current adapter that has same name as the file name
-        let src = this.state.adapter.findSourceByName(fileName);
-        let srcFirstLine = src.source.firstLine;
-
-        let matrixIndex = src.activatingTests.findIndex((val) => {
-            return val === activatingTestNumber;
-        });
-        if (matrixIndex === -1) {
-            return;
-        }
-
-        let testStmtArr = src.testStmtMatrix[matrixIndex];
-        let testStmtArrLength = testStmtArr.length;
+        let coveredLinesLength = coveredLines.length;
 
         // Obtain list of tr nodes 
         let rows = d3.select("#scrollContainer")
@@ -728,48 +872,44 @@ class Analyze extends React.Component {
             .nodes();
 
         // Change background color of nodes that are covered
-        for (let i = 0; i < testStmtArrLength; i++) {
-            if (!testStmtArr[i]) {
-                continue;
-            }
-            rows[i + srcFirstLine - 1].classList.add("coverableTr");
+        for (let i = 0; i < coveredLinesLength; i++) {
+            rows[coveredLines[i] - 1].classList.add("coverableTr");
         }
     }
+
+    removeExistingCoverage() {
+        let svgsD3 = d3.selectAll(".fileContainer")
+            .selectAll(".svgContainer > div > svg");
+            svgsD3.selectAll('rect.coverable')
+            .remove();
+    }
+
 
     /** =======================================================================
      * 
      * RENDER
      * 
      ======================================================================= */
-     render() {
+    render() {
         return (
-            <div className="analyze">
-                <div id="coverageInput">
+            <div id="tarantula">
+                {/* <div id="coverageInput">
                     <div>
                         <div>
                             <input type="text"></input>
                         </div>
-                        <button onClick={(e) => this.loadCoverageData(e)}>Load coverage</button>
-                    </div>
-                </div>
-
-                <div id="horizontalScrollView"></div> 
-
-                <div id="scrollContainer"></div>
-
-                {/* <div className="fileInfoHeader">
-                    <div>
-                        <p>File Name:</p>
-                        <p>{this.state.currentText.name}</p>
-                    </div>
-                    <div>
-                        <p>Lines of code:</p>
-                        <p>{this.state.currentText.content.length}</p>
+                        <button onClick={(e) => this.loadCoverageData(10343, e)}>Load coverage</button>
                     </div>
                 </div> */}
+                <div id="directoryContainer"></div>
+
+                <div id="coverageContainer">
+                    <div id="horizontalScrollView"></div> 
+                    <div id="scrollContainer"></div>
+                </div>
             </div>
         );
-     }
+    }
 }
 
-export default Analyze;
+export default Tarantula;

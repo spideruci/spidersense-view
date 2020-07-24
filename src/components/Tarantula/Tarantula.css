@@ -1,32 +1,83 @@
 /* ============================================================================
  * Base
 ============================================================================ */
-.analyze {
-    background-color: #f2f2f2;
-    min-height: 100vh;
-    padding: 24px;
+#tarantula {
+    /* background-color: #f2f2f2; */
+    /* min-height: 100vh; */
+    /* padding: 24px; */
+    display: flex;
+    flex-direction: row;
+    /* border: 1px dashed; */
 }
+
+/* ============================================================================
+ * Directory Container
+============================================================================ */
+#directoryContainer {
+    flex: 1 1 auto;
+    background-color: #FFFFFF;
+    /* display: flex; */
+    overflow-x: scroll;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    margin-right: 12px;
+}
+
+    .directoryTests {
+        /* border: 1px dashed; */
+    }
+        .directoryTestCases {
+            margin-left: 12px;
+        }
+    .directoryCheckboxLabel {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 4px 8px;
+    }
+        .directoryCheckboxLabel input {
+            -webkit-appearance: none;
+            background-color: #fafafa;
+            border: 1px solid #cacece;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px -15px 10px -12px rgba(0,0,0,0.05);
+            padding: 9px;
+            border-radius: 3px;
+            display: inline-block;
+            position: relative;
+            margin-right: 4px;
+        }
+        .directoryCheckboxLabel input:active, 
+        .directoryCheckboxLabel input:checked:active {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .directoryCheckboxLabel input:checked {
+            background-color: #e9ecee;
+            border: 1px solid #adb8c0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px -15px 10px -12px rgba(0,0,0,0.05), inset 15px 10px -12px rgba(255,255,255,0.1);
+            color: #99a1a7;
+        }
+        .directoryCheckboxLabel input:checked:after {
+            content: '\2714';
+            font-size: 14px;
+            position: absolute;
+            top: 0px;
+            left: 3px;
+            color: #99a1a7;
+        }
+        
+        .directoryCheckboxLabel label {
+            font-size: 10px;
+        }
 
 /* ============================================================================
  * CoverageInput
 ============================================================================ */
-#coverageInput {
+/* #coverageInput {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
 }
-#coverageInput > div {
-    width: 50%;
-    display: flex;
-    flex-direction: row;
-    justify-content: end;
-    align-items: center;
-    /* border: 1px dashed; */
-}
-    #coverageInput input[type=text] {
-        width: 100%;
-        padding: 4px 8px;
-    }
     #coverageInput button {
         background-color: #4CAF50;
         border: none;
@@ -39,7 +90,7 @@
     }
     #coverageInput button:hover {
         cursor: pointer;
-    }
+    } */
 
 /* ============================================================================
  * Horizontal Scroll View
@@ -49,6 +100,7 @@
     display: flex;
     overflow-x: scroll;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    margin-bottom: 12px;
 }
     /* ============================================================================
     * File Container
@@ -101,13 +153,14 @@
 ============================================================================ */
 #scrollContainer {
     background-color: #FFFFFF;
-    margin: 24px 0px;
+    /* margin: 24px 0px; */
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     height: 512px;
     overflow-y: scroll;
 }
     #scrollContainer table {
         border-collapse: collapse;
+        /* border: 1px dashed red; */
     }
     .coverableTr {
         background-color: rgb(124, 199, 124);
@@ -119,23 +172,3 @@
     .nonCoverable {
         fill: red;
     }
-
-    /* .fileInfoHeader {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-        .fileInfoHeader > div {
-            margin: 0px 24px;
-        }
-            .fileInfoHeader > div > p:nth-of-type(1) {
-                color: #404040;
-                font-size: 1.5rem;
-            }
-            .fileInfoHeader > div > p:nth-of-type(2) {
-                color: #666666;
-                font-size: 1.2rem;
-            }
-}  */
