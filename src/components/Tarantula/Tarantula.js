@@ -25,6 +25,7 @@ class Tarantula extends Component {
             minimapMaxHeights: [],
             scrollContainerHeight: 0,
             adapters: [],
+            testcases: []
             // activatingTests: []
         };
 
@@ -39,6 +40,10 @@ class Tarantula extends Component {
         this.TABLE_BODY_WIDTH = 700;
         this.SCROLL_FONT_SIZE = 12;
         this.SCROLL_CONTAINER_PADDING = 12;
+
+        const SCROLL_CONTAINER_HEIGHT = 512;
+        // this.DIRECTORY_HEIGHT = this.SVG_MAX_HEIGHT + 16 + 12 + 14 + SCROLL_CONTAINER_HEIGHT;
+        this.DIRECTORY_HEIGHT = 864;
 
         // Bind methods
         this.loadAllFiles = this.loadAllFiles.bind(this);
@@ -86,9 +91,6 @@ class Tarantula extends Component {
             process.env.PUBLIC_URL + "/tarantula/TarantulaFaultLocalizer.java",
         ];
 
-        // Generate directory contianer
-        this.generateDirectoryContainer();
-
         // Generate file container
         this.generateFileContainers(files.length);
 
@@ -111,6 +113,15 @@ class Tarantula extends Component {
 
             console.log("Successfully processed all responses");
         });
+
+        let getTaranTestcasesUrl = "http://127.0.0.1:5000/getAllTaranTestcases";
+        let getTaranTestcasesRequest = new Request();
+        let getTaranTestcasesPromise = getTaranTestcasesRequest.prepareSingleRequest(getTaranTestcasesUrl, 'json');
+        getTaranTestcasesPromise.then((value) => {
+            console.log(JSON.stringify(value.response));
+            // Generate directory contianer
+            this.generateDirectoryContainer(value.response);
+        });
     }
 
     /** =======================================================================
@@ -118,61 +129,24 @@ class Tarantula extends Component {
      * METHODS - Directory View
      * 
      ======================================================================= */
-    generateDirectoryContainer() {
-        // TODO: get actual from new queries after
-        this.tempData = {
-            tests: [
-                {
-                    sourceName: "[runner:org.spideruci.tarantula.TestDataBuilder]",
-                    testcases: [
-                        {
-                            testcaseId: 10343,
-                            signature: "[test:expectThereToBeNoFailingTestsInData_When_ZeroTestsAndStmts(org.spideruci.tarantula.TestDataBuilder)]"
-                        },
-                        {
-                            testcaseId: 10344,
-                            signature: "[test:canHandleNulls(org.spideruci.tarantula.TestDataBuilder)]"
-                        },
-                        {
-                            testcaseId: 10345,
-                            signature: "[test:expectThereToBeNoFailingTestsInData_When_NonZeroTestsAndStmts(org.spideruci.tarantula.TestDataBuilder)]"
-                        }
-                    ]
-                },
-                {
-                    sourceName: "[runner:org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt]",
-                    testcases: [
-                        {
-                            testcaseId: 10346,
-                            signature: "[test:expect_AllFailOnStmtsZero_When_AllPassingTests_AllTestsLiveGood_AllStmtsCovered(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
-                        },
-                        {
-                            testcaseId: 10347,
-                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllLiveGoodTests_And_AllCovbleStmts_And_NoStmtCovered(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
-                        },
-                        {
-                            testcaseId: 10348,
-                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllTestsAreLive_And_AllTestsAreBad(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
-                        },
-                        {
-                            testcaseId: 10349,
-                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllLiveGoodTests_And_NoCovbleStmts(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
-                        },
-                        {
-                            testcaseId: 10350,
-                            signature: "[test:expect_AllZeroPassAndFailOnStmts_When_AllTestsAreDead_And_ZeroTestsAreBad(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]"
-                        },
-                    ]
-                }
-            ]
-        };
-
-        let sourceNames = this.tempData.tests.map((d) => {return d.sourceName});
+    generateDirectoryContainer(testcases) {
+        let sourceNames = testcases.src;
         console.log("Printing source names: " + sourceNames);
 
+        let testcasesData = [];
+        for (let k of Object.keys(testcases)) {
+            if (k !== "src") {
+                let obj = {};
+                obj[k] = testcases[k];
+                testcasesData.push(obj);
+            }
+        }
+        console.log(JSON.stringify(testcasesData));
+
         let tests = d3.select("#directoryContainer")
+            .style("height", this.DIRECTORY_HEIGHT.toString() + "px")
             .selectAll("div")
-            .data(this.tempData.tests)
+            .data(testcasesData)
             .enter()
             .append("div")
             .classed("directoryTests sourceName", true);
@@ -181,14 +155,17 @@ class Tarantula extends Component {
             .classed("directoryCheckboxLabel", true);
         testsCheckContainer.append("input")
             .attr("type", "checkbox")
-            .attr("key", function(t) {return t.sourceName});
+            .attr("key", function(t) {return Object.keys(t)[0]});
         testsCheckContainer.append("label")
-            .text(function(t) {return t.sourceName});
+            .text(function(t) {return Object.keys(t)[0]});
 
         let testCases = tests.append("div")
             .classed("directoryTestCases", true)
             .selectAll("div")
-            .data(function(t) {return t.testcases})
+            .data(function(t) {
+                let k = Object.keys(t)[0];
+                return t[k];
+            })
             .enter()
             .append("div")
             .classed("directoryCheckboxLabel testCase", true);
@@ -197,6 +174,10 @@ class Tarantula extends Component {
             .attr("key", function(t) {return t.testcaseId});
         testCases.append("label")
             .text(function(t) {return t.signature});
+
+        this.setState((state) => ({
+            testcases: testcases
+        }));
 
         d3.selectAll(".sourceName input")
             .on('click', () => {
@@ -210,9 +191,12 @@ class Tarantula extends Component {
 
     onSourceNameChecked(sourceName, checked) {
         console.log("onSourceNameChecked(): sourcename: " + sourceName + " checked: " + checked);
-        let testCases = this.tempData.tests.filter((t) => {
-            return t.sourceName === sourceName;
-        })[0].testcases.map((tc) => {
+        let source = this.state.testcases.filter((t) => {
+            let k = Object.keys(t)[0];
+            return k === sourceName;
+        })[0];
+        
+        let testCases = source[sourceName].map((tc) => {
             return tc.testcaseId;
         });
         console.log("test cases: " + testCases);
@@ -726,6 +710,7 @@ class Tarantula extends Component {
     loadCoverageData() {
         this.removeExistingCoverage();
 
+        // Get the test ids of the activated (checked) tests 
         let activatedTestCases = d3.selectAll(".testCase")
             .select("input")
             .nodes()
@@ -738,58 +723,54 @@ class Tarantula extends Component {
         
         console.log("Activated tests: " + activatedTestCases);
 
-        // TODO: Getting a cors request error
-        // Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://127.0.0.1:5000/sourceCoverage/org.spideruci.tarantula.TarantulaDataBuilder.java. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing).
-        // let file = "http://127.0.0.1:5000/sourceCoverage/org.spideruci.tarantula.TarantulaDataBuilder.java";
-        // let file =  process.env.PUBLIC_URL + "/tests/test-case.json"; // test-case id: 10343
-
-        // Create Request object to handle requests
-        // let req = new Request();
-        // let promise = req.prepareSingleRequest(file, 'json');
-        // promise.then((value) => {
-        //     this.displayCoverage(value, testCaseId);
-        //     console.log("Successfully processed response");
-        // });
+        // Map test ids to server url
         let files = activatedTestCases.map((t) => {
-            return process.env.PUBLIC_URL + "/tests/test-case-" + t.toString() + ".json";
+            // return process.env.PUBLIC_URL + "/tests/test-case-" + t.toString() + ".json";
+            return "http://127.0.0.1:5000/testcaseCoverage/" + t.toString();
         });
 
+        console.log(files);
+
         // Create Request object to handle requests
-        let req = new Request();
-        let promisesArr;
-        try {
-            promisesArr = req.prepareRequest(files, 'json');
-        } catch(err) {
-            console.err(err);
-            return;
+        let promisesArr = new Array(files.length);
+        for (let i = 0; i < files.length; i++) {
+            let req = new Request();
+            promisesArr[i] = req.makeRequest(files[i], 'json');
         }
 
         // Process each response only when all requests complete
         Promise.all(promisesArr).then((values) => {
             for (let i = 0; i < values.length; i++) {
-                console.log("Request #" + i + ":\n" + values[i]);
-                this.displayCoverage(values[i], activatedTestCases[i]);
-                // this.processResponse(values[i], i);
+                console.log("Request #" + i + ":\n" + JSON.stringify(values[i].response));
+
+                this.displayCoverage(values[i].response, activatedTestCases[i]);
             }
 
             console.log("Successfully processed all responses");
+        })
+        .catch(error => { 
+            console.error(error.message);
         });
     }
 
     /**
      * Display coverage for the test case (using testcaseid). Go through each entry in the
      * coverage map, find the file container associated with it, and highlight covered lines.
-     * @param {Object} request    The request object containing coverage data
+     * @param {Object} response   The response object containing coverage data
      * @param {number} testCaseId The test case id to display coverage for
      */
-    displayCoverage(request, testCaseId) {
+    displayCoverage(response, testCaseId) {
         // this.removeExistingCoverage();
 
         let parser = new FileNameParser();
-        let adapter = new TestcaseCoverageAdapter(testCaseId, request.response);
-        let coverageMap = adapter.getLineCoverageByFile();
+        // let adapter = new TestcaseCoverageAdapter(testCaseId, request.response);
+        let adapter = new TestcaseCoverageAdapter(testCaseId);
+        adapter.getLineCoverageByFile(response);
+
+        // let coverageMap = adapter.getLineCoverageByFile();
+        let coverageMap = adapter.getCoverageMap();
         for (let [key, value] of coverageMap.entries()) {
-            console.log(key + ' = ' + value)
+            console.log(key + ' = ' + value);
         }
 
         // For each entry in the map, get the matching file container index,
@@ -839,19 +820,21 @@ class Tarantula extends Component {
         if (this.state.selectionIndex === -1) {
             return;
         }
-        if (this.state.adapters == null) {
+        if (this.state.adapters == null || this.state.adapters.length === 0) {
             return;
         }
+
+        console.log("ADAPTERS: " + this.state.adapters + "\nSELECTION INDEX: " + this.state.selectionIndex);
 
         let fileName = this.state.allFiles[this.state.selectionIndex].name;
         let parser = new FileNameParser();
         let extractedFileName = parser.extractFileName(fileName);
 
-        let coverageMap = this.state.adapters[0]
+        let coverageMap = this.state.adapters[this.state.selectionIndex]
             // .filter((a) => {
             //     return a.testCaseId ===
             // })
-            .getLineCoverageByFile();
+            .getCoverageMap();
 
         let coveredLines = coverageMap.get(extractedFileName);
         if (coveredLines == undefined) {
@@ -882,6 +865,10 @@ class Tarantula extends Component {
             .selectAll(".svgContainer > div > svg");
             svgsD3.selectAll('rect.coverable')
             .remove();
+
+        this.setState((state) => ({
+            adapters: []
+        }));
     }
 
 
@@ -893,15 +880,9 @@ class Tarantula extends Component {
     render() {
         return (
             <div id="tarantula">
-                {/* <div id="coverageInput">
-                    <div>
-                        <div>
-                            <input type="text"></input>
-                        </div>
-                        <button onClick={(e) => this.loadCoverageData(10343, e)}>Load coverage</button>
-                    </div>
-                </div> */}
-                <div id="directoryContainer"></div>
+                {/* <div id="directoryContainerWrapper"> */}
+                    <div id="directoryContainer"></div>
+                {/* </div> */}
 
                 <div id="coverageContainer">
                     <div id="horizontalScrollView"></div> 

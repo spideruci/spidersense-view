@@ -2,13 +2,21 @@ import FileNameParser from '../util/file-name-parser';
 
 class TestcaseCoverageAdapter {
 
-    constructor(id, jsonObject) {
+    constructor(id) {
         this.testCaseId = id;
-        this.response = jsonObject;
+        this.coverageMap = new Map();
     }
+    // constructor(id, jsonObject) {
+    //     this.testCaseId = id;
+    //     this.response = jsonObject;
+    // }
 
     getTestCaseId() {
         return this.testCaseId;
+    }
+
+    getCoverageMap() {
+        return this.coverageMap;
     }
 
     /**
@@ -32,25 +40,39 @@ class TestcaseCoverageAdapter {
      * ]
      * @return {Map} A Map (key = name of the source file, value = line numbers)
      */
-    getLineCoverageByFile() {
+    getLineCoverageByFile(response) {
         let parser = new FileNameParser();
+        let newCoverageMap = new Map();
 
-        let testCase = this.response.testcases[0];
+        if (response.testcases == null) {
+            console.error("testcases came back as null");
+            return;
+        }
+        if (response.testcases[0] == null) {
+            console.error("testases array came back as null");
+            return;
+        }
+        if (response.testcases[0].coverage == null) {
+            console.error("coverage came back as null");
+            return;
+        }
+
+        let testCase = response.testcases[0];
         let coverageArr = testCase.coverage;
         
-        let coverageMap = new Map();
         for (let c of coverageArr) {
             let l = c.line;
             let lineNumber = l.lineNumber;
             let srcName = parser.extractFileNameByDot(l.sourceName);
-            if (coverageMap.has(srcName)) {
-                let prevLines = coverageMap.get(srcName);
-                coverageMap.set(srcName, prevLines.concat(lineNumber));
+            if (newCoverageMap.has(srcName)) {
+                let prevLines = newCoverageMap.get(srcName);
+                newCoverageMap.set(srcName, prevLines.concat(lineNumber));
             } else {
-                coverageMap.set(srcName, [lineNumber]);
+                newCoverageMap.set(srcName, [lineNumber]);
             }
         }
-        return coverageMap;
+        this.coverageMap = newCoverageMap;
+        // return coverageMap;
     }
 }
 export default TestcaseCoverageAdapter;
