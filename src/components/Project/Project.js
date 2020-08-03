@@ -3,7 +3,6 @@ import React from 'react';
 import * as d3 from 'd3';
 
 import Request from '../../network/request';
-import CorsRequest from '../../network/cors-request';
 
 import Overview from '../Overview/Overview';
 import Tarantula from '../Tarantula/Tarantula';

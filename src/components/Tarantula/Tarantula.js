@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import * as d3 from 'd3';
 import Request from '../../network/request';
 import FileNameParser from '../../util/file-name-parser';
-// import CoverageMatrixAdapter from '../../network/coverage-matrix-adapter';
 import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
 
 import "./Tarantula.css";
@@ -26,7 +25,6 @@ class Tarantula extends Component {
             scrollContainerHeight: 0,
             adapters: [],
             testcases: []
-            // activatingTests: []
         };
 
         // Constants
@@ -78,18 +76,32 @@ class Tarantula extends Component {
     loadAllFiles() {
         console.log("loadAllFiles()");
 
-        // TODO: Actually obtain list of files
-        let files = [
-            // process.env.PUBLIC_URL + "/tests/sampleACADEdited2.txt"
-            // process.env.PUBLIC_URL + "/tests/hello-world.txt",
-            // process.env.PUBLIC_URL + "/tests/pride-and-prejudice.txt"
-            // process.env.PUBLIC_URL + "/tests/Botm2.java",
-            process.env.PUBLIC_URL + "/tarantula/PassFailPair.java",
-            process.env.PUBLIC_URL + "/tarantula/Tarantula.java",
-            process.env.PUBLIC_URL + "/tarantula/TarantulaData.java",
-            process.env.PUBLIC_URL + "/tarantula/TarantulaDataBuilder.java",
-            process.env.PUBLIC_URL + "/tarantula/TarantulaFaultLocalizer.java",
+        const baseUrl = "https://raw.githubusercontent.com";
+        let username = "spideruci";
+        let projectName = "Tarantula";
+        let branch = "master";
+        let javaDirectoryPath = "src/main/java";
+
+        let sourceNames = [
+            "org.spideruci.tarantula.PassFailPair.java",
+            "org.spideruci.tarantula.Tarantula.java",
+            "org.spideruci.tarantula.TarantulaData.java",
+            "org.spideruci.tarantula.TarantulaDataBuilder.java",
+            "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
         ];
+        let modifiedSourceNames = sourceNames.map((v) => {
+            let split = v.split(".");
+            let fSplit = split.slice(0, split.length - 1);
+            let fJoined = fSplit.join("/");
+            return fJoined + "." + split[split.length - 1];
+        });
+        console.log(modifiedSourceNames);
+
+        let files = modifiedSourceNames.map((v) => {
+            return [baseUrl, username, projectName, branch, javaDirectoryPath, v].join("/");
+        });
+        console.log(files);
+
 
         // Generate file container
         this.generateFileContainers(files.length);
@@ -112,15 +124,15 @@ class Tarantula extends Component {
             }
 
             console.log("Successfully processed all responses");
-        });
 
-        let getTaranTestcasesUrl = "http://127.0.0.1:5000/getAllTaranTestcases";
-        let getTaranTestcasesRequest = new Request();
-        let getTaranTestcasesPromise = getTaranTestcasesRequest.prepareSingleRequest(getTaranTestcasesUrl, 'json');
-        getTaranTestcasesPromise.then((value) => {
-            console.log(JSON.stringify(value.response));
-            // Generate directory contianer
-            this.generateDirectoryContainer(value.response);
+            let getTaranTestcasesUrl = "http://127.0.0.1:5000/getAllTaranTestcases";
+            let getTaranTestcasesRequest = new Request();
+            let getTaranTestcasesPromise = getTaranTestcasesRequest.prepareSingleRequest(getTaranTestcasesUrl, 'json');
+            getTaranTestcasesPromise.then((value) => {
+                console.log(JSON.stringify(value.response));
+                // Generate directory contianer
+                this.generateDirectoryContainer(value.response);
+            });
         });
     }
 
@@ -176,7 +188,7 @@ class Tarantula extends Component {
             .text(function(t) {return t.signature});
 
         this.setState((state) => ({
-            testcases: testcases
+            testcases: testcasesData
         }));
 
         d3.selectAll(".sourceName input")
@@ -193,6 +205,7 @@ class Tarantula extends Component {
         console.log("onSourceNameChecked(): sourcename: " + sourceName + " checked: " + checked);
         let source = this.state.testcases.filter((t) => {
             let k = Object.keys(t)[0];
+            console.log("K: " + k);
             return k === sourceName;
         })[0];
         
@@ -206,7 +219,8 @@ class Tarantula extends Component {
 
         for (let i = 0; i < allTestCheckboxes.length; i++) {
             let key = allTestCheckboxes[i].getAttribute("key");
-            if (testCases.includes(parseInt(key, 10))) {
+            if (testCases.includes(key)) {
+                console.log("KEY: " + key);
                 allTestCheckboxes[i].checked = checked;
             }
         }
@@ -824,28 +838,12 @@ class Tarantula extends Component {
             return;
         }
 
-        console.log("ADAPTERS: " + this.state.adapters + "\nSELECTION INDEX: " + this.state.selectionIndex);
+        console.log("ADAPTERS: " + JSON.stringify(this.state.adapters) + "\nSELECTION INDEX: " + this.state.selectionIndex);
+        console.log("Files: " + JSON.stringify(this.state.allFiles));
 
         let fileName = this.state.allFiles[this.state.selectionIndex].name;
         let parser = new FileNameParser();
         let extractedFileName = parser.extractFileName(fileName);
-
-        let coverageMap = this.state.adapters[this.state.selectionIndex]
-            // .filter((a) => {
-            //     return a.testCaseId ===
-            // })
-            .getCoverageMap();
-
-        let coveredLines = coverageMap.get(extractedFileName);
-        if (coveredLines == undefined) {
-            console.error("Couldn't retrieve extracted file name from adapter");
-            console.log("filename: " + fileName 
-                + "\nextracted file name: " + extractedFileName);
-            return;
-        }
-
-        // Find source in current adapter that has same name as the file name
-        let coveredLinesLength = coveredLines.length;
 
         // Obtain list of tr nodes 
         let rows = d3.select("#scrollContainer")
@@ -854,9 +852,25 @@ class Tarantula extends Component {
             .selectAll("tr")
             .nodes();
 
-        // Change background color of nodes that are covered
-        for (let i = 0; i < coveredLinesLength; i++) {
-            rows[coveredLines[i] - 1].classList.add("coverableTr");
+        let allAdapters = this.state.adapters;
+        for (let a = 0; a < allAdapters.length; a++) {
+            let adapter = allAdapters[a];
+            let coverageMap = adapter.getCoverageMap();
+
+            // Find source in current adapter that has same name as the file name
+            let coveredLines = coverageMap.get(extractedFileName);
+            let coveredLinesLength = coveredLines.length;
+            if (coveredLines == undefined) {
+                console.error("Couldn't retrieve extracted file name from adapter");
+                console.log("filename: " + fileName 
+                    + "\nextracted file name: " + extractedFileName);
+                return;
+            }
+
+            // Change background color of nodes that are covered
+            for (let i = 0; i < coveredLinesLength; i++) {
+                rows[coveredLines[i] - 1].classList.add("coverableTr");
+            }
         }
     }
 
@@ -880,9 +894,7 @@ class Tarantula extends Component {
     render() {
         return (
             <div id="tarantula">
-                {/* <div id="directoryContainerWrapper"> */}
-                    <div id="directoryContainer"></div>
-                {/* </div> */}
+                <div id="directoryContainer"></div>
 
                 <div id="coverageContainer">
                     <div id="horizontalScrollView"></div> 
