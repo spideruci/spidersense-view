@@ -1,13 +1,22 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 
 import * as d3 from 'd3';
 import Request from '../../network/request';
 import FileNameParser from '../../util/file-name-parser';
 import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
 
+import { makeStyles } from '@material-ui/core/styles';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+
 import "./Tarantula.css";
 
 class Tarantula extends Component {
+    commitWrapper = createRef();
+
     /** =======================================================================
      * 
      * LIFECYCLE
@@ -24,44 +33,55 @@ class Tarantula extends Component {
             minimapMaxHeights: [],
             scrollContainerHeight: 0,
             adapters: [],
-            testcases: []
+            testcases: [],
+            commits: [],
+            selectedCommit: ''
         };
 
         // Constants
         this.FONT_SIZE = 1;            // Font size for svg text
         this.Y_TEXT_PADDING = 1;       // Top padding for each tspan
-
         this.SVG_WIDTH = 48;           // Width of each minimap
         this.SVG_MAX_HEIGHT = 300;     // Height of each minimap
         this.PIXELS_PER_LINE = this.FONT_SIZE + this.Y_TEXT_PADDING;    // # of pixels making up 1 line
-        this.LINES_PER_SVG = Math.floor(this.SVG_MAX_HEIGHT / this.PIXELS_PER_LINE);
-        this.TABLE_BODY_WIDTH = 700;
-        this.SCROLL_FONT_SIZE = 12;
-        this.SCROLL_CONTAINER_PADDING = 12;
+        this.LINES_PER_SVG = Math.floor(this.SVG_MAX_HEIGHT / this.PIXELS_PER_LINE);    // # of lines per svg 
+        this.TABLE_BODY_WIDTH = 700;           // Width of display scroll container table
+        this.SCROLL_FONT_SIZE = 12;            // Font size of td element 
+        this.SCROLL_CONTAINER_PADDING = 12;    // Padding of display scroll container
 
-        const SCROLL_CONTAINER_HEIGHT = 512;
+        // const SCROLL_CONTAINER_HEIGHT = 512;
         // this.DIRECTORY_HEIGHT = this.SVG_MAX_HEIGHT + 16 + 12 + 14 + SCROLL_CONTAINER_HEIGHT;
         this.DIRECTORY_HEIGHT = 864;
 
+        // Variables
+        this.parser = new FileNameParser();
+        this.useStylesClasses = makeStyles((theme) => ({
+            formControl: {
+              margin: theme.spacing(1),
+              minWidth: 120,
+              width: 200
+            },
+            selectEmpty: {
+              marginTop: theme.spacing(2),
+            },
+        }));
+
         // Bind methods
-        this.loadAllFiles = this.loadAllFiles.bind(this);
-
-        this.generateDirectoryContainer = this.generateDirectoryContainer.bind(this);
+        this.generateDirectoryView = this.generateDirectoryView.bind(this);
         this.onSourceNameChecked = this.onSourceNameChecked.bind(this);
-
         this.generateFileContainers = this.generateFileContainers.bind(this);
         this.generateMinimap = this.generateMinimap.bind(this);
         this.updateSelection = this.updateSelection.bind(this);
         this.generateSlider = this.generateSlider.bind(this);
         this.generateDisplay = this.generateDisplay.bind(this);
-
-        this.loadCoverageData = this.loadCoverageData.bind(this);
-        this.displayCoverage = this.displayCoverage.bind(this);
-        this.displaySelectedCoverage = this.displaySelectedCoverage.bind(this);
+        this.requestCoverage = this.requestCoverage.bind(this);
+        this.displayCoverageOnMinimap = this.displayCoverageOnMinimap.bind(this);
+        this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
+        this.handleChange = this.handleChange.bind(this);
     } 
 
     componentDidMount() {
-        this.loadAllFiles();
+        this.requestCommits();
     }
 
     /** =======================================================================
@@ -69,70 +89,234 @@ class Tarantula extends Component {
      * METHODS - Requests and Response
      * 
      ======================================================================= */
+
     /**
-     * Loads the files into the current component. A request is made for each file 
-     * and gathered as promises.
+     * TODO: Request commits from spidersense-worker
+     * Request commits coming from SpiderSense-worker. The data returned is
+     * expected to be the commit ids (shas). Update the state to retain those
+     * commits.
      */
-    loadAllFiles() {
-        console.log("loadAllFiles()");
+    requestCommits() {
+        let url = "https://api.github.com/repos/spideruci/Tarantula/commits";
 
+        fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {            
+            let shas = data.map((d) => {
+                return d.sha;
+            });
+            console.log(`shas: ${shas}`);
+
+            // Update state to retain commit information
+            this.setState((state) => ({
+                commits: shas
+            }));
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    /**
+     * TODO: Get the correct information from the spidersense worker
+     * Use the selected commit id as a parameter for the GraphQL query to 
+     * get back the names of the source files. Specifically, we need the
+     * path to the source file, and the source file names. Altogether, the
+     * following information is needed:
+     * - Github owner name
+     * - Repository name
+     * - commit id
+     * - The path to the file
+     * - The file name
+     * @param   {string}    sha     The commit id
+     */
+    requestSourceLinks(sha) {
+        let url = "http://127.0.0.1:5000/getTaranSourceInfo";
+
+        fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {            
+            console.log(JSON.stringify(data));
+
+            let sourceLinksArray = data.sourceLinks;
+            this.buildDownloadUrls(sha, sourceLinksArray);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Retrieve the actual source files from Github. We won't be using the
+     * Github API because it is rate-limited. Instead, we will build the
+     * urls using the arguments.
+     * @param   {string}     sha                 The commid id 
+     * @param   {array}      sourceLinksArray    The source links
+     */
+    buildDownloadUrls(sha, sourceLinksArray) {
+        console.log("buildDownloadURls() - " + sha);
+        // ea47de8926855d249ee9823bdf7b9359ccaba27c
+        const headers = {
+            "Authorization": `Token ea47de8926855d249ee9823bdf7b9359ccaba27c`
+        }
+        // const url = "https://api.github.com/search/issues?q=repo:thucnguyen95/SWE266PCourseProject type:issue";
+        // let url = "https://api.github.com/repos/spideruci/Tarantula/contents/src/main/java/org/spideruci/tarantula/Tarantula.java";
+        // const resp = await fetch(url, {
+        //     "method": "GET",
+        //     "headers": headers
+        // });
+        // const result = await resp.json();
+        // console.log(JSON.stringify(result));
+        let sourceLinks = sourceLinksArray.map((l) => {
+            let arr = l.split("/");
+            return arr[arr.length - 1];
+        })
+
+        // Variables to build the urls
         const baseUrl = "https://raw.githubusercontent.com";
-        let username = "spideruci";
-        let projectName = "Tarantula";
-        let branch = "master";
-        let javaDirectoryPath = "src/main/java";
+        const owner = "spideruci";
+        const repo = "Tarantula";
+        const filePath = "src/main/java/org/spideruci/tarantula";
 
-        let sourceNames = [
-            "org.spideruci.tarantula.PassFailPair.java",
-            "org.spideruci.tarantula.Tarantula.java",
-            "org.spideruci.tarantula.TarantulaData.java",
-            "org.spideruci.tarantula.TarantulaDataBuilder.java",
-            "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
-        ];
-        let modifiedSourceNames = sourceNames.map((v) => {
-            let split = v.split(".");
-            let fSplit = split.slice(0, split.length - 1);
-            let fJoined = fSplit.join("/");
-            return fJoined + "." + split[split.length - 1];
+        // Build the download urls
+        let downloadUrls = sourceLinks.map((l) => {
+            return {
+                name: l,
+                url: [baseUrl, owner, repo, sha, filePath, l].join("/")
+            }
         });
-        console.log(modifiedSourceNames);
+        console.log(`Download urls: ${JSON.stringify(downloadUrls)}`);
 
-        let files = modifiedSourceNames.map((v) => {
-            return [baseUrl, username, projectName, branch, javaDirectoryPath, v].join("/");
+        // Download the source files from Github
+        this.downloadContentsFromGithub(downloadUrls);
+    }
+
+    /**
+     * Use the built urls to retrieve the source files from Github.
+     * After retrieving them, generate the file containers, then generate
+     * the minimaps for each file. Finally, request the test cases.
+     * @param   {array}     downloadUrls    The urls to get the source files
+     */
+    downloadContentsFromGithub(downloadUrls) {
+        console.log("downloadContentsFromGithub()");
+
+        let names = downloadUrls.map(u => u.name);
+        let urls = downloadUrls.map(u => u.url);
+
+        Promise.all(urls.map((req) => {
+            return fetch(req).then((response) => {
+                return response.text();
+            })
+            .then((data) => {
+                return data;
+            });
+        })).then((fileTexts) => {
+            console.log('values', fileTexts);
+
+            // Generate file container
+            const numberOfFileContainers = fileTexts.length;
+            this.generateFileContainers(numberOfFileContainers);
+
+            let allFiles = new Array(numberOfFileContainers);
+
+            for (let i = 0; i < fileTexts.length; i++) {
+                console.log(`File text: ${fileTexts[i]}`);
+
+                // Get text and split by newline, for each empty element, replace with newline
+                let text = fileTexts[i];
+                let textArray = text.split("\n");
+                textArray = textArray.map((l) => {
+                    return (l.length === 0) ? "\n" : l;
+                });
+
+                // Create object to add as element to allFiles array
+                let o = {
+                    name: names[i],
+                    contents: textArray
+                }
+                allFiles[i] = o;
+
+                // Generate minimap(s) for the current file
+                this.generateMinimap(names[i], textArray, i);
+            }
+
+            // Update state so that allFiles contains the text of each file retrieved
+            this.setState((state) => ({
+                allFiles: allFiles
+            }));
+
+            // Make request to get test coverage
+            this.requestTestcases();
+        }).catch((error) => {
+            console.error(error);
         });
+    }
+
+    /**
+     * Request for information about all testcases of Tarantula project from the
+     * SpiderSense worker. On response, generate the directory view.
+     */
+    requestTestcases() {
+        let getTaranTestcasesUrl = "http://127.0.0.1:5000/getAllTaranTestcases";
+        let getTaranTestcasesRequest = new Request();
+        let getTaranTestcasesPromise = getTaranTestcasesRequest.prepareSingleRequest(getTaranTestcasesUrl, 'json');
+        getTaranTestcasesPromise.then((value) => {
+            this.generateDirectoryView(value.response);
+        });
+    }
+
+    /**
+     * TODO: Update to use the selected commid id (sha) to get specific coverage
+     *       for the tests based on different commits
+     * Request test coverage data for each testcase id that was checked in
+     * ths directory view. Remove existing testcases before getting the
+     * coverage data.
+     */
+    requestCoverage() {
+        this.removeExistingCoverage();
+
+        // Get the test ids of the activated (checked) tests 
+        let activatedTestCases = d3.selectAll(".testCase")
+            .select("input")
+            .nodes()
+            .filter((n) => {
+                return n.checked;
+            })
+            .map((n) => {
+                return n.getAttribute("key");
+            });
+        
+        console.log("Activated tests: " + activatedTestCases);
+
+        // Map test ids to server url
+        let files = activatedTestCases.map((t) => {
+            // return process.env.PUBLIC_URL + "/tests/test-case-" + t.toString() + ".json";
+            return "http://127.0.0.1:5000/testcaseCoverage/" + t.toString();
+        });
+
         console.log(files);
 
-
-        // Generate file container
-        this.generateFileContainers(files.length);
-
         // Create Request object to handle requests
-        let req = new Request();
-        let promisesArr;
-        try {
-            promisesArr = req.prepareRequest(files, 'text');
-        } catch(err) {
-            console.err(err);
-            return;
+        let promisesArr = new Array(files.length);
+        for (let i = 0; i < files.length; i++) {
+            let req = new Request();
+            promisesArr[i] = req.makeRequest(files[i], 'json');
         }
 
         // Process each response only when all requests complete
         Promise.all(promisesArr).then((values) => {
             for (let i = 0; i < values.length; i++) {
-                console.log("Request #" + i + ":\n" + values[i]);
-                this.processResponse(values[i], i);
+                console.log("Request #" + i + ":\n" + JSON.stringify(values[i].response));
+
+                this.displayCoverageOnMinimap(values[i].response, activatedTestCases[i]);
             }
 
             console.log("Successfully processed all responses");
-
-            let getTaranTestcasesUrl = "http://127.0.0.1:5000/getAllTaranTestcases";
-            let getTaranTestcasesRequest = new Request();
-            let getTaranTestcasesPromise = getTaranTestcasesRequest.prepareSingleRequest(getTaranTestcasesUrl, 'json');
-            getTaranTestcasesPromise.then((value) => {
-                console.log(JSON.stringify(value.response));
-                // Generate directory contianer
-                this.generateDirectoryContainer(value.response);
-            });
+        })
+        .catch(error => { 
+            console.error(error.message);
         });
     }
 
@@ -141,20 +325,38 @@ class Tarantula extends Component {
      * METHODS - Directory View
      * 
      ======================================================================= */
-    generateDirectoryContainer(testcases) {
-        let sourceNames = testcases.src;
-        console.log("Printing source names: " + sourceNames);
 
+    /**
+     * Generates the directory given the source names and testcases for each 
+     * source. Each source name and test case should have an input (checkbox)
+     * and label. Update state for testcases and add click listeners to checkboxes.
+     * @param   {Object}    response    The response received
+     */
+    generateDirectoryView(response) {
+        console.log("generateDirectoryView() - " + JSON.stringify(response));
+
+        // Reformat so that each property of object is an object in an array
         let testcasesData = [];
-        for (let k of Object.keys(testcases)) {
+        for (let k of Object.keys(response)) {
             if (k !== "src") {
-                let obj = {};
-                obj[k] = testcases[k];
-                testcasesData.push(obj);
+                let o = {};
+                o[k] = response[k];
+                testcasesData.push(o);
             }
         }
-        console.log(JSON.stringify(testcasesData));
+        console.log("testcasesData: " + JSON.stringify(testcasesData));
 
+        // Set height for directory container
+        // let directoryContainer = d3.select("#directoryContainer");
+            // .style("height", this.DIRECTORY_HEIGHT.toString() + "px");
+
+        // Add contents for directory actions
+        // let directoryActions = d3.select("#directoryActions")
+        //     .append("p")
+        //     .text("Clear All")
+        //     .classed("clearAll", true);
+        
+        // Bind data to divs under directory view
         let tests = d3.select("#directoryContainer")
             .style("height", this.DIRECTORY_HEIGHT.toString() + "px")
             .selectAll("div")
@@ -163,6 +365,7 @@ class Tarantula extends Component {
             .append("div")
             .classed("directoryTests sourceName", true);
         
+        // For each source name, add a checkbox (when checked, will check all testcases)
         let testsCheckContainer = tests.append("div")
             .classed("directoryCheckboxLabel", true);
         testsCheckContainer.append("input")
@@ -171,7 +374,8 @@ class Tarantula extends Component {
         testsCheckContainer.append("label")
             .text(function(t) {return Object.keys(t)[0]});
 
-        let testCases = tests.append("div")
+        // For each source name, add checkboxes equal to # of testcases 
+        let testcases = tests.append("div")
             .classed("directoryTestCases", true)
             .selectAll("div")
             .data(function(t) {
@@ -181,16 +385,18 @@ class Tarantula extends Component {
             .enter()
             .append("div")
             .classed("directoryCheckboxLabel testCase", true);
-        testCases.append("input")
+        testcases.append("input")
             .attr("type", "checkbox")
             .attr("key", function(t) {return t.testcaseId});
-        testCases.append("label")
+        testcases.append("label")
             .text(function(t) {return t.signature});
 
+        // Update state for testcases
         this.setState((state) => ({
             testcases: testcasesData
         }));
 
+        // Add click listeners for checkboxes
         d3.selectAll(".sourceName input")
             .on('click', () => {
                 this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
@@ -200,92 +406,32 @@ class Tarantula extends Component {
                 this.onTestCaseChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
             });
     }
-
-    onSourceNameChecked(sourceName, checked) {
-        console.log("onSourceNameChecked(): sourcename: " + sourceName + " checked: " + checked);
-        let source = this.state.testcases.filter((t) => {
-            let k = Object.keys(t)[0];
-            console.log("K: " + k);
-            return k === sourceName;
-        })[0];
-        
-        let testCases = source[sourceName].map((tc) => {
-            return tc.testcaseId;
-        });
-        console.log("test cases: " + testCases);
-
-        let allTestCheckboxes = d3.selectAll(".testCase")
-            .select("input").nodes();
-
-        for (let i = 0; i < allTestCheckboxes.length; i++) {
-            let key = allTestCheckboxes[i].getAttribute("key");
-            if (testCases.includes(key)) {
-                console.log("KEY: " + key);
-                allTestCheckboxes[i].checked = checked;
-            }
-        }
-
-        this.loadCoverageData();
-    }
-
-    onTestCaseChecked(testCaseId, checked) {
-        console.log("onTestCaseChecked(): testCaseId: " + testCaseId + " checked: " + checked);
-        this.loadCoverageData();
-    }
-
-
-    /**
-     * Retrieves the response from the request object, processes the response
-     * text, and updates the state to include the current file.
-     * @param   {Object}    request     The request object
-     * @param   {number}    index       The index of the request
-     */
-    processResponse(request, index) {
-        const txt = request.response;
-        let txtLineByLine = txt.split("\n");
-
-        console.log("Processing response - text line-by-line is:\n" + txtLineByLine);
-
-        // For each element in array that is empty, replace with newline
-        txtLineByLine = txtLineByLine.map((l) => {
-            return (l.length === 0) ? "\n" : l;
-        });
-
-        // Add object with information about file to allFiles
-        let obj = {
-            name: request.responseURL,
-            contents: txtLineByLine
-        }
-        
-        this.setState((state) => ({
-            allFiles: state.allFiles.concat(obj)
-        }));
-
-        // Generate minimap(s) for the current file
-        this.generateMinimap(txtLineByLine, index);
-    }
-
+    
     /** =======================================================================
      * 
-     * METHODS - DOM Manipulation
+     * METHODS - File Containers and Minimap
      * 
      ======================================================================= */
 
     /**
-     * Creates a container (div) with the class 'fileContainer' for each
-     * file that was requested. The file containers will hold the containers
-     * for the title of the file and each svg element of the file.
-     * @param {number} numFiles The number of files
+     * Creates a container with the class 'fileContainer' for each file that was 
+     * requested. The file containers will hold containers for the title of the 
+     * file and each svg element of the file. Add click listener to file containers
+     * to update the selection.
+     * @param   {number}    numFiles    The number of files
      */
     generateFileContainers(numFiles) {
-        console.log("Generating file containers...");
+        console.log("generateFileContainers() - numFiles: " + numFiles);
 
         let horizontalScollViewD3 = d3.select("#horizontalScrollView")
             .style("width", this.TABLE_BODY_WIDTH + "px");
         
         for (let i = 0; i < numFiles; i++) {
             horizontalScollViewD3.append("div")
-                .classed('fileContainer', true);
+                .classed('fileContainer', true)
+                .on('click', (e) => {
+                    this.updateSelection(i, e);
+                });
         }
     }
 
@@ -293,39 +439,41 @@ class Tarantula extends Component {
      * Generates the minimap(s) for each file that was requested.
      * Calculates how many maps should be added, the height for each map, and
      * the tspan elements that should be embedded for each svg element.
+     * @param   {string}    fileName        The name of the current file
      * @param   {number}    txtLineByLine   The lines of the file as an array
      * @param   {number}    fileIndex       The index of the current file
      */
-    generateMinimap(txtLineByLine, fileIndex) {
-        console.log("Generating minimap for file at index #" + fileIndex);
+    generateMinimap(fileName, txtLineByLine, fileIndex) {
+        console.log("generateMinimap() - index #" + fileIndex);
 
         // Calculate variables
         const linesOfCode = txtLineByLine.length;
         let totalHeightForFile = linesOfCode * this.PIXELS_PER_LINE;
         let numberOfSvgs = Math.ceil(totalHeightForFile  / this.SVG_MAX_HEIGHT);
-        console.log("LOC: " + linesOfCode + "\nAvailable svg height:" + this.SVG_MAX_HEIGHT 
-            + "\nPixels per line: " + this.PIXELS_PER_LINE
-            + "\nLines per svg: " + this.LINES_PER_SVG
-            + "\nTotal height for file: " + totalHeightForFile 
-            + "\nNumber of svgs: " + numberOfSvgs);
+        console.log("\tLOC: " + linesOfCode 
+            + "\n\tAvailable svg height:" + this.SVG_MAX_HEIGHT 
+            + "\n\tPixels per line: " + this.PIXELS_PER_LINE
+            + "\n\tLines per svg: " + this.LINES_PER_SVG
+            + "\n\tTotal height for file: " + totalHeightForFile 
+            + "\n\tNumber of svgs: " + numberOfSvgs);
 
+        // Get handle on file container at index
         let fileContainer = d3.selectAll('.fileContainer')
             .filter(function(d, i) {return i === fileIndex})
-            .on('click', (e) => {
-                this.updateSelection(fileIndex, e);
-            });
 
-        let parser = new FileNameParser();
-        let modifiedTitle = parser.extractFileName(this.state.allFiles[fileIndex].name);
+        // Set title of file container to the extracted name
+        // let extractedTitle = this.parser.extractFileName(this.state.allFiles[fileIndex].name);
         let titleContainer = fileContainer.append('div');
         titleContainer.append('p')
-            .text(modifiedTitle);
+            .text(fileName);
 
+        // Append a div that will act as the container for svg elements
         let svgContainerD3 = fileContainer.append('div')
             .classed('svgContainer', true);
 
-        // For each svg, set its width, height, y offset, and append elements
+        // For each svg...
         for (let i = 0; i < numberOfSvgs; i++) {
+            // Set width, height, y offset, and append elements
             let svgHeight =  (i < numberOfSvgs - 1) ? this.SVG_MAX_HEIGHT : 
                         (totalHeightForFile % this.SVG_MAX_HEIGHT);
 
@@ -335,7 +483,8 @@ class Tarantula extends Component {
                 .attr("height", svgHeight);
             let textI = svgI.append("text")
                 .attr("x", 0)
-                .attr("y", 0);
+                .attr("y", 0)
+                .style('font-size', this.FONT_SIZE.toString() + "px");;
 
             // Find the number of lines for the current svg
             let maxLinesInCurrentSvg = (i < numberOfSvgs - 1) ? this.LINES_PER_SVG :
@@ -352,64 +501,13 @@ class Tarantula extends Component {
                     .text(txtLineByLine[(this.LINES_PER_SVG * i) + j]);
             }
         }
-
-        // Set font size on text element
-        d3.selectAll('.svgContainer')
-            .selectAll('div')
-            .select('svg')
-            .selectAll('text')
-            .style('font-size', this.FONT_SIZE.toString() + "px");
     }
 
-    /**
-     * Update the state with the selected file container. Reset background color of  
-     * unselected containers and update color for selected file container.
-     * Generate the display, the slider, and coverage for selected index.
-     * @param {number} index The index of the file container that was clicked
-     */
-    updateSelection(index) {
-        console.log("Update selection of file container at index #" + index);
-
-        if (this.state.selectionIndex === index) {
-            console.log("Already in same file container");
-            return;
-        }
-
-        const linesOfCode = this.state.allFiles[index].contents.length;
-
-        let totalHeightForFile = linesOfCode * this.PIXELS_PER_LINE;
-        let numberOfSvgs = Math.ceil(totalHeightForFile  / this.SVG_MAX_HEIGHT);
-
-        let minimapMaxHeights = [];
-        for (let i = 0; i < numberOfSvgs; i++) {
-            let svgHeight =  (i < numberOfSvgs - 1) ? this.SVG_MAX_HEIGHT : 
-                        (totalHeightForFile % this.SVG_MAX_HEIGHT);
-            minimapMaxHeights.push(svgHeight);
-        }
-
-        // Update state
-        this.setState((state) => ({
-            selectionIndex: index,
-            numberOfSvgs: numberOfSvgs,
-            minimapMaxHeights: minimapMaxHeights
-        }));
-
-        // Change background color of file container
-        let fileContainers = document.getElementsByClassName('fileContainer');
-        for (let i = 0; i < fileContainers.length; i++) {
-            fileContainers[i].style.backgroundColor = "#FFFFFF";
-        }
-        fileContainers[index].style.backgroundColor = "#E9E9E9";
-
-        // Generate display
-        this.generateDisplay(index);
-
-        // Generate slider
-        this.generateSlider(index);
-
-        // Display selected coverage if it is available
-        this.displaySelectedCoverage();
-    }
+    /** =======================================================================
+     * 
+     * METHODS - Display View (Scroll container)
+     * 
+     ======================================================================= */
 
     /**
      * Generates the display for whichever file was clicked. This function is
@@ -567,11 +665,11 @@ class Tarantula extends Component {
                 console.log("Event: Mousedown: Different Svg #" + i);
 
                 // Remove any sliders that are in the transition state
-                if (currentSliderState == sliderState.TRANSITION_BACK) {
+                if (currentSliderState === sliderState.TRANSITION_BACK) {
                     d3.select(nodes[currentSvgIndex - 1])
                         .select('.sliderRect').remove();
                 }
-                else if (currentSliderState == sliderState.TRANSITION_NEXT) {
+                else if (currentSliderState === sliderState.TRANSITION_NEXT) {
                     d3.select(nodes[currentSvgIndex + 1])
                         .select('.sliderRect').remove();
                 }
@@ -619,7 +717,7 @@ class Tarantula extends Component {
                 slider.attr('y', Math.floor(this.scrollTop / multiplier) - (currentSvgIndex * SVG_MAX_HEIGHT));
 
                 // Determine slider state
-                if (currentSliderState == sliderState.BASE) {
+                if (currentSliderState === sliderState.BASE) {
                     if ( (Math.floor(this.scrollTop / multiplier) >= (currentSvgIndex + 1) * SVG_MAX_HEIGHT - SLIDER_HEIGHT
                         && currentSvgIndex + 1 < maxNumSvgs)
                         || (Math.floor(this.scrollTop / multiplier) < currentSvgIndex * SVG_MAX_HEIGHT
@@ -653,7 +751,7 @@ class Tarantula extends Component {
                 }
                 else {
                     console.log("transitioning...");
-                    if (currentSliderState == sliderState.TRANSITION_NEXT) {
+                    if (currentSliderState === sliderState.TRANSITION_NEXT) {
                         transitionSlider.attr('y', Math.floor(this.scrollTop / multiplier) - ((currentSvgIndex + 1) * SVG_MAX_HEIGHT));
 
                         // If transitioning next but return
@@ -667,7 +765,7 @@ class Tarantula extends Component {
                             currentSliderState = sliderState.BASE;
                         }
                     } 
-                    else if (currentSliderState == sliderState.TRANSITION_BACK) {
+                    else if (currentSliderState === sliderState.TRANSITION_BACK) {
                         transitionSlider.attr('y', Math.floor(this.scrollTop / multiplier) - ((currentSvgIndex - 1) * SVG_MAX_HEIGHT));
 
                         // If transitioning back but return
@@ -719,61 +817,12 @@ class Tarantula extends Component {
      ======================================================================= */
 
     /**
-     * Load the json file pertaining to the coverage data
-     */
-    loadCoverageData() {
-        this.removeExistingCoverage();
-
-        // Get the test ids of the activated (checked) tests 
-        let activatedTestCases = d3.selectAll(".testCase")
-            .select("input")
-            .nodes()
-            .filter((n) => {
-                return n.checked;
-            })
-            .map((n) => {
-                return n.getAttribute("key");
-            });
-        
-        console.log("Activated tests: " + activatedTestCases);
-
-        // Map test ids to server url
-        let files = activatedTestCases.map((t) => {
-            // return process.env.PUBLIC_URL + "/tests/test-case-" + t.toString() + ".json";
-            return "http://127.0.0.1:5000/testcaseCoverage/" + t.toString();
-        });
-
-        console.log(files);
-
-        // Create Request object to handle requests
-        let promisesArr = new Array(files.length);
-        for (let i = 0; i < files.length; i++) {
-            let req = new Request();
-            promisesArr[i] = req.makeRequest(files[i], 'json');
-        }
-
-        // Process each response only when all requests complete
-        Promise.all(promisesArr).then((values) => {
-            for (let i = 0; i < values.length; i++) {
-                console.log("Request #" + i + ":\n" + JSON.stringify(values[i].response));
-
-                this.displayCoverage(values[i].response, activatedTestCases[i]);
-            }
-
-            console.log("Successfully processed all responses");
-        })
-        .catch(error => { 
-            console.error(error.message);
-        });
-    }
-
-    /**
      * Display coverage for the test case (using testcaseid). Go through each entry in the
      * coverage map, find the file container associated with it, and highlight covered lines.
      * @param {Object} response   The response object containing coverage data
      * @param {number} testCaseId The test case id to display coverage for
      */
-    displayCoverage(response, testCaseId) {
+    displayCoverageOnMinimap(response, testCaseId) {
         // this.removeExistingCoverage();
 
         let parser = new FileNameParser();
@@ -822,14 +871,14 @@ class Tarantula extends Component {
         }));
 
         // Display coverage in scroll container
-        this.displaySelectedCoverage();
+        this.displayCoverageOnDisplay();
     }
 
     /**
      * For the currently selected file determined by the selection index, 
      * display the coverage data by highlighting lines of the activated test.
      */
-    displaySelectedCoverage() {
+    displayCoverageOnDisplay() {
         // Return if no file container was selected or the coverage data hasn't been loaded
         if (this.state.selectionIndex === -1) {
             return;
@@ -860,7 +909,7 @@ class Tarantula extends Component {
             // Find source in current adapter that has same name as the file name
             let coveredLines = coverageMap.get(extractedFileName);
             let coveredLinesLength = coveredLines.length;
-            if (coveredLines == undefined) {
+            if (coveredLines === undefined) {
                 console.error("Couldn't retrieve extracted file name from adapter");
                 console.log("filename: " + fileName 
                     + "\nextracted file name: " + extractedFileName);
@@ -874,6 +923,31 @@ class Tarantula extends Component {
         }
     }
 
+    /** =======================================================================
+     * 
+     * METHODS - Clearing/Resetting
+     * 
+     ======================================================================= */
+    resetComponent() {
+        // Remove nodes
+        d3.select("#directoryContainer").selectAll("*").remove();
+        d3.select("#horizontalScrollView").selectAll("*").remove();
+        d3.select("#scrollContainer").selectAll("*").remove();
+
+        // Reset state
+        // NOTE: commits[] is not reset 
+        this.setState((state) => ({
+            allFiles: [],
+            selectionIndex: -1,
+            numberOfSvgs: 0,
+            minimapMaxHeights: [],
+            scrollContainerHeight: 0,
+            adapters: [],
+            testcases: [],
+            selectedCommit: ''
+        }));
+    }
+
     removeExistingCoverage() {
         let svgsD3 = d3.selectAll(".fileContainer")
             .selectAll(".svgContainer > div > svg");
@@ -885,6 +959,137 @@ class Tarantula extends Component {
         }));
     }
 
+    /** =======================================================================
+     * 
+     * METHODS - Event Handling
+     * 
+     ======================================================================= */
+
+     /**
+      * Event callback when a commit id is selected. Reset the state of this
+      * component and remove generated DOM nodes.
+      * @param  {Object}    event   The event that triggered the callback
+      */
+     handleChange(event) {
+        let sha = event.target.value;
+
+        // Reset only if newly selected sha is different from previous sha
+        if (this.state.selectedCommit !== sha) {
+            this.resetComponent();
+        }
+
+        // Update state for the selected commit/sha
+        this.setState(state => ({
+            selectedCommit: sha
+        }));
+        console.log("Commit changed to: " + sha);
+        
+        // Request the names of the file from spidersense-worker TODO: update so that commit is used
+        this.requestSourceLinks(sha);
+    }
+
+    /**
+     * TODO: Fix bug with removing coverage from display view on deselection
+     * Event callback for when the checkbox for a source name is clicked.
+     * Looks through the state's testcases to find the affiliated testcaseIds for the
+     * clicked source, and checks the input checkboxes whose keys match those testcaseIds.
+     * Then loads coverage data for multiple test cases.
+     * @param   {string}    sourceName  The name of the source file
+     * @param   {boolean}   checked     Whether the checkbox was checked or unchecked
+     */
+    onSourceNameChecked(sourceName, checked) {
+        console.log("onSourceNameChecked() - sourceName: " + sourceName + ", checked: " + checked);
+
+        // Filter state's testcases by source name that was checked
+        let source = this.state.testcases.filter((t) => {
+            let k = Object.keys(t)[0];
+            return k === sourceName;
+        })[0];
+        
+        // Gather testcase ids in an array
+        let testcases = source[sourceName].map((tc) => {
+            return tc.testcaseId;
+        });
+        console.log("Test cases: " + testcases);
+
+        // Handle on all input checkbox nodes that are linked to a testcase id
+        let allTestCheckboxes = d3.selectAll(".testCase")
+            .select("input").nodes();
+
+        // Check only checkboxes with testcase keys contained in testcases
+        for (let i = 0; i < allTestCheckboxes.length; i++) {
+            let key = allTestCheckboxes[i].getAttribute("key");
+            if (testcases.includes(key)) {
+                allTestCheckboxes[i].checked = checked;
+            }
+        }
+
+        // Load the coverage data
+        this.requestCoverage();
+    }
+
+    /**
+     * Event callback for when the checkbox for a testcase is clicked.
+     * Loads coverage data for test case.
+     * @param   {number}    testcaseId  Number indicating the testcase id
+     * @param   {boolean}   checked     Whether the checkbox was checked or unchecked
+     */
+    onTestCaseChecked(testcaseId, checked) {
+        console.log("onTestCaseChecked() - testcaseId: " + testcaseId + ", checked: " + checked);
+
+        // Load the coverage data
+        this.requestCoverage();
+    }
+
+    /**
+     * Update the state with the selected file container. Reset background color of  
+     * unselected containers and update color for selected file container.
+     * Generate the display, the slider, and coverage for selected index.
+     * @param {number} index The index of the file container that was clicked
+     */
+    updateSelection(index) {
+        console.log("Update selection of file container at index #" + index);
+
+        if (this.state.selectionIndex === index) {
+            console.log("Already in same file container");
+            return;
+        }
+
+        const linesOfCode = this.state.allFiles[index].contents.length;
+
+        let totalHeightForFile = linesOfCode * this.PIXELS_PER_LINE;
+        let numberOfSvgs = Math.ceil(totalHeightForFile  / this.SVG_MAX_HEIGHT);
+
+        let minimapMaxHeights = [];
+        for (let i = 0; i < numberOfSvgs; i++) {
+            let svgHeight =  (i < numberOfSvgs - 1) ? this.SVG_MAX_HEIGHT : 
+                        (totalHeightForFile % this.SVG_MAX_HEIGHT);
+            minimapMaxHeights.push(svgHeight);
+        }
+
+        // Update state
+        this.setState((state) => ({
+            selectionIndex: index,
+            numberOfSvgs: numberOfSvgs,
+            minimapMaxHeights: minimapMaxHeights
+        }));
+
+        // Change background color of file container
+        let fileContainers = document.getElementsByClassName('fileContainer');
+        for (let i = 0; i < fileContainers.length; i++) {
+            fileContainers[i].style.backgroundColor = "#FFFFFF";
+        }
+        fileContainers[index].style.backgroundColor = "#E9E9E9";
+
+        // Generate display
+        this.generateDisplay(index);
+
+        // Generate slider
+        this.generateSlider(index);
+
+        // Display selected coverage if it is available
+        this.displaySelectedCoverage();
+    }
 
     /** =======================================================================
      * 
@@ -894,11 +1099,40 @@ class Tarantula extends Component {
     render() {
         return (
             <div id="tarantula">
-                <div id="directoryContainer"></div>
+                <div id="commitContainer">
+                    <div ref={this.commitWrapper}>
+                        <FormControl className={this.useStylesClasses.formControl}>
+                            <InputLabel id="simpleSelectLabelCommit">Commit</InputLabel>
+                            <Select
+                                labelId="simpleSelectLabelCommit"
+                                id="selectCommit"
+                                value={this.state.selectedCommit}
+                                onChange={this.handleChange}
+                            >
+                                {/* <MenuItem value={10}>Ten</MenuItem>
+                                <MenuItem value={20}>Twenty</MenuItem>
+                                <MenuItem value={30}>Thirty</MenuItem> */}
+                                {
+                                    this.state.commits.map((c) => (
+                                        <MenuItem key={c} value={c}>
+                                            {c}
+                                        </MenuItem>
+                                    ))
+                                }
+                            </Select>
+                        </FormControl>
+                    </div>
+                </div>
+                <div id="tarantulaWrapper">
+                    {/* <div id="directoryContainer"> */}
+                        {/* <div id="directoryActions"></div> */}
+                        <div id="directoryContainer"></div>
+                    {/* </div> */}
 
-                <div id="coverageContainer">
-                    <div id="horizontalScrollView"></div> 
-                    <div id="scrollContainer"></div>
+                    <div id="coverageContainer">
+                        <div id="horizontalScrollView"></div> 
+                        <div id="scrollContainer"></div>
+                    </div>
                 </div>
             </div>
         );

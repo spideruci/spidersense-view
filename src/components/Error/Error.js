@@ -1,16 +1,6 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 class Error extends React.Component {
-    /** =======================================================================
-     * 
-     * LIFECYCLE
-     * 
-     ======================================================================= */
-    constructor(props) {
-        super(props);
-    } 
-
-
     /** =======================================================================
      * 
      * RENDER

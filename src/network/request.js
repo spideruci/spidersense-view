@@ -1,7 +1,9 @@
 class Request {
-    constructor() {
-    }
-
+    /** =======================================================================
+     * 
+     * METHODS
+     * 
+     ======================================================================= */
     /**
      * Takes array of urls as an argument and makes a request to each
      * url, returning a list of promises.
@@ -11,9 +13,10 @@ class Request {
      */
     prepareRequest(urls, type) {
         // Throw error is urls is not an array
-        if (!Array.isArray(urls)) {
-            throw "urls is not an array";
-        }
+        // if (!Array.isArray(urls)) {
+            // throw "urls is not an array";
+            // return [new Promise.reject("urls is not an array")];
+        // }
 
         // Gather the requests as promises into an array
         let promisesArr = new Array(urls.length);

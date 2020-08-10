@@ -6,10 +6,6 @@ class TestcaseCoverageAdapter {
         this.testCaseId = id;
         this.coverageMap = new Map();
     }
-    // constructor(id, jsonObject) {
-    //     this.testCaseId = id;
-    //     this.response = jsonObject;
-    // }
 
     getTestCaseId() {
         return this.testCaseId;

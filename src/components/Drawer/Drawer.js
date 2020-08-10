@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 import "./Drawer.css";
@@ -10,16 +10,6 @@ import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 
 
 class Drawer extends React.Component {
-    /** =======================================================================
-     * 
-     * LIFECYCLE
-     * 
-     ======================================================================= */
-    constructor(props) {
-        super(props);
-    } 
-
-
     /** =======================================================================
      * 
      * RENDER

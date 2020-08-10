@@ -5,12 +5,27 @@
     /* background-color: #f2f2f2; */
     /* min-height: 100vh; */
     /* padding: 24px; */
-    display: flex;
+    /* display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: stretch; */
     /* overflow: hidden; */
     /* height: 100%; */
     /* border: 1px dashed; */
+}
+#commitContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 0px 12px;
+    margin-bottom: 12px;
+}
+#selectCommit {
+    min-width: 120px;
+}
+#tarantulaWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
 }
 
 /* ============================================================================
@@ -22,6 +37,20 @@
     overflow-x: scroll;
     overflow-y: auto; */
 }
+/* #directoryContainer { */
+    /* flex-grow: 1; */
+    /* align-self: stretch; */
+    /* background-color: #FFFFFF; */
+/* } */
+#directoryActions {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 4px 8px;
+}
+    .clearAll {
+        color: #cf0000;
+    }
 #directoryContainer {
     /* flex-shrink: 10; */
     /* display: flex;

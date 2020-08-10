@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import "./List.css";
 
@@ -70,7 +70,7 @@ class List extends React.Component {
                 break;
             }
         }
-        if (index == -1) {
+        if (index === -1) {
             console.error("Couldn't find clicked unit");
             return;
         }
