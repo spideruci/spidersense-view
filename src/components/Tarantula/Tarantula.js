@@ -1,17 +1,18 @@
 import React, { Component, createRef } from 'react';
 
 import * as d3 from 'd3';
-import Request from '../../network/request';
+// import Request from '../../network/request';
 import FileNameParser from '../../util/file-name-parser';
 import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
 
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
+// import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 
+import { spidersenseWorkerUrls } from '../../util/vars';
 import "./Tarantula.css";
 
 class Tarantula extends Component {
@@ -81,7 +82,9 @@ class Tarantula extends Component {
     } 
 
     componentDidMount() {
-        this.requestCommits();
+        // TODO: Get project id from component above
+        let projectId = 17;
+        this.requestCommits(projectId);
     }
 
     /** =======================================================================
@@ -91,27 +94,24 @@ class Tarantula extends Component {
      ======================================================================= */
 
     /**
-     * TODO: Request commits from spidersense-worker
-     * Request commits coming from SpiderSense-worker. The data returned is
-     * expected to be the commit ids (shas). Update the state to retain those
-     * commits.
+     * Request commits from SpiderSense-worker. The data returned is expected to 
+     * be the commit ids (shas). Update the state to retain those commits.
+     * @param   {number}    projectId   The project id
      */
-    requestCommits() {
-        let url = "https://api.github.com/repos/spideruci/Tarantula/commits";
+    requestCommits(projectId) {
+        console.log("requestCommits()");
+        let url = `${spidersenseWorkerUrls.getCommits}/${projectId}`;
 
         fetch(url, {
             method: 'GET'
         }).then((response) => {
             return response.json();
-        }).then((data) => {            
-            let shas = data.map((d) => {
-                return d.sha;
-            });
-            console.log(`shas: ${shas}`);
+        }).then((data) => {
+            console.log("Callback:\n" + JSON.stringify(data));
 
             // Update state to retain commit information
             this.setState((state) => ({
-                commits: shas
+                commits: data.builds
             }));
         }).catch((error) => {
             console.error(error);
@@ -119,11 +119,11 @@ class Tarantula extends Component {
     }
 
     /**
-     * TODO: Get the correct information from the spidersense worker
      * Use the selected commit id as a parameter for the GraphQL query to 
-     * get back the names of the source files. Specifically, we need the
-     * path to the source file, and the source file names. Altogether, the
-     * following information is needed:
+     * get back the urls of the source files. Pass the source links to
+     * download contents from Github.
+     * 
+     * The urls have been built on the server side using the ingredients:
      * - Github owner name
      * - Repository name
      * - commit id
@@ -132,79 +132,38 @@ class Tarantula extends Component {
      * @param   {string}    sha     The commit id
      */
     requestSourceLinks(sha) {
-        let url = "http://127.0.0.1:5000/getTaranSourceInfo";
+        console.log("requestSourceLinks()");
+        let url = `${spidersenseWorkerUrls.getSourceInfo}/${sha}`;
 
         fetch(url, {
             method: 'GET'
         }).then((response) => {
             return response.json();
         }).then((data) => {            
-            console.log(JSON.stringify(data));
+            console.log("Callback:\n" + JSON.stringify(data.sourceLinks));
 
-            let sourceLinksArray = data.sourceLinks;
-            this.buildDownloadUrls(sha, sourceLinksArray);
+            this.downloadContentsFromGithub(data.sourceLinks);
         }).catch((error) => {
             console.error(error);
         });
     }
 
     /**
-     * Retrieve the actual source files from Github. We won't be using the
-     * Github API because it is rate-limited. Instead, we will build the
-     * urls using the arguments.
-     * @param   {string}     sha                 The commid id 
-     * @param   {array}      sourceLinksArray    The source links
-     */
-    buildDownloadUrls(sha, sourceLinksArray) {
-        console.log("buildDownloadURls() - " + sha);
-        // ea47de8926855d249ee9823bdf7b9359ccaba27c
-        const headers = {
-            "Authorization": `Token ea47de8926855d249ee9823bdf7b9359ccaba27c`
-        }
-        // const url = "https://api.github.com/search/issues?q=repo:thucnguyen95/SWE266PCourseProject type:issue";
-        // let url = "https://api.github.com/repos/spideruci/Tarantula/contents/src/main/java/org/spideruci/tarantula/Tarantula.java";
-        // const resp = await fetch(url, {
-        //     "method": "GET",
-        //     "headers": headers
-        // });
-        // const result = await resp.json();
-        // console.log(JSON.stringify(result));
-        let sourceLinks = sourceLinksArray.map((l) => {
-            let arr = l.split("/");
-            return arr[arr.length - 1];
-        })
-
-        // Variables to build the urls
-        const baseUrl = "https://raw.githubusercontent.com";
-        const owner = "spideruci";
-        const repo = "Tarantula";
-        const filePath = "src/main/java/org/spideruci/tarantula";
-
-        // Build the download urls
-        let downloadUrls = sourceLinks.map((l) => {
-            return {
-                name: l,
-                url: [baseUrl, owner, repo, sha, filePath, l].join("/")
-            }
-        });
-        console.log(`Download urls: ${JSON.stringify(downloadUrls)}`);
-
-        // Download the source files from Github
-        this.downloadContentsFromGithub(downloadUrls);
-    }
-
-    /**
      * Use the built urls to retrieve the source files from Github.
      * After retrieving them, generate the file containers, then generate
      * the minimaps for each file. Finally, request the test cases.
-     * @param   {array}     downloadUrls    The urls to get the source files
+     * @param   {array}     sourceLinks    The urls to get the source files
      */
-    downloadContentsFromGithub(downloadUrls) {
+    downloadContentsFromGithub(sourceLinks) {
         console.log("downloadContentsFromGithub()");
 
-        let names = downloadUrls.map(u => u.name);
-        let urls = downloadUrls.map(u => u.url);
+        // Get names of source links and links in different arrays
+        let names = sourceLinks.map((u) => {
+            return this.parser.extractFileName(u);
+        });
+        let urls = sourceLinks;
 
+        // Make the request for all files
         Promise.all(urls.map((req) => {
             return fetch(req).then((response) => {
                 return response.text();
@@ -213,7 +172,7 @@ class Tarantula extends Component {
                 return data;
             });
         })).then((fileTexts) => {
-            console.log('values', fileTexts);
+            console.log('Callback:\n', fileTexts);
 
             // Generate file container
             const numberOfFileContainers = fileTexts.length;
@@ -255,68 +214,72 @@ class Tarantula extends Component {
     }
 
     /**
-     * Request for information about all testcases of Tarantula project from the
-     * SpiderSense worker. On response, generate the directory view.
+     * Using the selectedCommit from the state, request all testcases of 
+     * the current project from the SpiderSense worker. On response, 
+     * generate the directory view.
      */
     requestTestcases() {
-        let getTaranTestcasesUrl = "http://127.0.0.1:5000/getAllTaranTestcases";
-        let getTaranTestcasesRequest = new Request();
-        let getTaranTestcasesPromise = getTaranTestcasesRequest.prepareSingleRequest(getTaranTestcasesUrl, 'json');
-        getTaranTestcasesPromise.then((value) => {
-            this.generateDirectoryView(value.response);
+        console.log("requestTestcases()");
+
+        let selectedCommitId = this.state.selectedCommit;
+        let url = `${spidersenseWorkerUrls.getAllTestcases}/${selectedCommitId}`;
+
+        fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {            
+            console.log("Callback:\n" + JSON.stringify(data));
+
+            this.generateDirectoryView(data)
+        }).catch((error) => {
+            console.error(error);
         });
     }
 
     /**
-     * TODO: Update to use the selected commid id (sha) to get specific coverage
-     *       for the tests based on different commits
      * Request test coverage data for each testcase id that was checked in
      * ths directory view. Remove existing testcases before getting the
      * coverage data.
      */
     requestCoverage() {
+        console.log("requestCoverage()");
+
         this.removeExistingCoverage();
 
         // Get the test ids of the activated (checked) tests 
         let activatedTestCases = d3.selectAll(".testCase")
             .select("input")
             .nodes()
-            .filter((n) => {
-                return n.checked;
-            })
-            .map((n) => {
-                return n.getAttribute("key");
-            });
+            .filter(n => n.checked)
+            .map(n => n.getAttribute("key"));
         
-        console.log("Activated tests: " + activatedTestCases);
-
         // Map test ids to server url
-        let files = activatedTestCases.map((t) => {
-            // return process.env.PUBLIC_URL + "/tests/test-case-" + t.toString() + ".json";
-            return "http://127.0.0.1:5000/testcaseCoverage/" + t.toString();
+        let urls = activatedTestCases.map((t) => {
+            return `${spidersenseWorkerUrls.testcaseCoverage}/${t.toString()}`;
         });
 
-        console.log(files);
+        console.log("Activated tests: " + activatedTestCases);
+        console.log("Urls: " + urls);
 
-        // Create Request object to handle requests
-        let promisesArr = new Array(files.length);
-        for (let i = 0; i < files.length; i++) {
-            let req = new Request();
-            promisesArr[i] = req.makeRequest(files[i], 'json');
-        }
+        // Make the request for all activated test cases (liveness)
+        Promise.all(urls.map((req) => {
+            return fetch(req).then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                return data;
+            });
+        })).then((response) => {
+            console.log('Callback:\n' + JSON.stringify(response));
 
-        // Process each response only when all requests complete
-        Promise.all(promisesArr).then((values) => {
-            for (let i = 0; i < values.length; i++) {
-                console.log("Request #" + i + ":\n" + JSON.stringify(values[i].response));
+            for (let i = 0; i < response.length; i++) {
+                console.log("Response #" + i + ":\n" + JSON.stringify(response[i]));
 
-                this.displayCoverageOnMinimap(values[i].response, activatedTestCases[i]);
+                this.displayCoverageOnMinimap(response[i], activatedTestCases[i]);
             }
-
-            console.log("Successfully processed all responses");
-        })
-        .catch(error => { 
-            console.error(error.message);
+        }).catch((error) => {
+            console.error(error);
         });
     }
 
@@ -338,11 +301,9 @@ class Tarantula extends Component {
         // Reformat so that each property of object is an object in an array
         let testcasesData = [];
         for (let k of Object.keys(response)) {
-            if (k !== "src") {
-                let o = {};
-                o[k] = response[k];
-                testcasesData.push(o);
-            }
+            let o = {};
+            o[k] = response[k];
+            testcasesData.push(o);
         }
         console.log("testcasesData: " + JSON.stringify(testcasesData));
 
@@ -513,11 +474,12 @@ class Tarantula extends Component {
      * Generates the display for whichever file was clicked. This function is
      * called from updateSelection() when a click event on a file container occurs.
      * @param {number} index The index of the file container that was clicked.
+     * Update the state to save the scrollContainerHeight
      */
     generateDisplay(index) {
-        console.log("Generating display for file container at index #" + index);
+        console.log("generateDisplay() - index #" + index);
 
-        // Grab contents 
+        // Grab contents from state
         let obj = this.state.allFiles[index];
         let content = obj.contents;
 
@@ -823,14 +785,11 @@ class Tarantula extends Component {
      * @param {number} testCaseId The test case id to display coverage for
      */
     displayCoverageOnMinimap(response, testCaseId) {
-        // this.removeExistingCoverage();
+        console.log("displayCoverageOnMinimap()");
 
-        let parser = new FileNameParser();
-        // let adapter = new TestcaseCoverageAdapter(testCaseId, request.response);
         let adapter = new TestcaseCoverageAdapter(testCaseId);
         adapter.getLineCoverageByFile(response);
 
-        // let coverageMap = adapter.getLineCoverageByFile();
         let coverageMap = adapter.getCoverageMap();
         for (let [key, value] of coverageMap.entries()) {
             console.log(key + ' = ' + value);
@@ -840,7 +799,7 @@ class Tarantula extends Component {
         // and add rects for each line that is covered.
         for (let [key, value] of coverageMap.entries()) {
             let fileContainerIndex = this.state.allFiles.findIndex((val) => {
-                return (key === parser.extractFileName(val.name));
+                return (key === val.name);
             });
 
             let svgsD3 = d3.selectAll(".fileContainer")
@@ -867,7 +826,6 @@ class Tarantula extends Component {
         // Update state with adapter and activating test
         this.setState((state) => ({
             adapters: state.adapters.concat(adapter),
-            // activatingTests: [testCaseId]
         }));
 
         // Display coverage in scroll container
@@ -887,12 +845,12 @@ class Tarantula extends Component {
             return;
         }
 
-        console.log("ADAPTERS: " + JSON.stringify(this.state.adapters) + "\nSELECTION INDEX: " + this.state.selectionIndex);
-        console.log("Files: " + JSON.stringify(this.state.allFiles));
+        console.log("displayCoverageOnDisplay()")
+        console.log("Adapters: " + JSON.stringify(this.state.adapters) 
+            + "\nSelection Index: " + this.state.selectionIndex
+            + "\nFiles: " + JSON.stringify(this.state.allFiles));
 
         let fileName = this.state.allFiles[this.state.selectionIndex].name;
-        let parser = new FileNameParser();
-        let extractedFileName = parser.extractFileName(fileName);
 
         // Obtain list of tr nodes 
         let rows = d3.select("#scrollContainer")
@@ -907,17 +865,15 @@ class Tarantula extends Component {
             let coverageMap = adapter.getCoverageMap();
 
             // Find source in current adapter that has same name as the file name
-            let coveredLines = coverageMap.get(extractedFileName);
-            let coveredLinesLength = coveredLines.length;
+            let coveredLines = coverageMap.get(fileName);
             if (coveredLines === undefined) {
                 console.error("Couldn't retrieve extracted file name from adapter");
-                console.log("filename: " + fileName 
-                    + "\nextracted file name: " + extractedFileName);
+                console.error("filename: " + fileName);
                 return;
             }
 
             // Change background color of nodes that are covered
-            for (let i = 0; i < coveredLinesLength; i++) {
+            for (let i = 0; i < coveredLines.length; i++) {
                 rows[coveredLines[i] - 1].classList.add("coverableTr");
             }
         }
@@ -965,12 +921,13 @@ class Tarantula extends Component {
      * 
      ======================================================================= */
 
-     /**
-      * Event callback when a commit id is selected. Reset the state of this
-      * component and remove generated DOM nodes.
-      * @param  {Object}    event   The event that triggered the callback
-      */
-     handleChange(event) {
+    /**
+     * Event callback when a commit id is selected. Reset the state of this
+     * component and remove generated DOM nodes.
+     * @param  {Object}    event   The event that triggered the callback
+     */
+    handleChange(event) {
+        console.log("handleChange() - sha: " + event.target.value);
         let sha = event.target.value;
 
         // Reset only if newly selected sha is different from previous sha
@@ -982,9 +939,8 @@ class Tarantula extends Component {
         this.setState(state => ({
             selectedCommit: sha
         }));
-        console.log("Commit changed to: " + sha);
         
-        // Request the names of the file from spidersense-worker TODO: update so that commit is used
+        // Request urls to the source files for current commit
         this.requestSourceLinks(sha);
     }
 
@@ -1024,7 +980,7 @@ class Tarantula extends Component {
             }
         }
 
-        // Load the coverage data
+        // Request coverage data
         this.requestCoverage();
     }
 
@@ -1037,7 +993,7 @@ class Tarantula extends Component {
     onTestCaseChecked(testcaseId, checked) {
         console.log("onTestCaseChecked() - testcaseId: " + testcaseId + ", checked: " + checked);
 
-        // Load the coverage data
+        // Request coverage data
         this.requestCoverage();
     }
 
@@ -1048,10 +1004,10 @@ class Tarantula extends Component {
      * @param {number} index The index of the file container that was clicked
      */
     updateSelection(index) {
-        console.log("Update selection of file container at index #" + index);
+        console.log("updateSelection() - index #" + index);
 
         if (this.state.selectionIndex === index) {
-            console.log("Already in same file container");
+            console.log("Already in same file container. Returning...");
             return;
         }
 
@@ -1087,8 +1043,8 @@ class Tarantula extends Component {
         // Generate slider
         this.generateSlider(index);
 
-        // Display selected coverage if it is available
-        this.displaySelectedCoverage();
+        // Display coverage on display container if it is available
+        this.displayCoverageOnDisplay();
     }
 
     /** =======================================================================
@@ -1109,13 +1065,10 @@ class Tarantula extends Component {
                                 value={this.state.selectedCommit}
                                 onChange={this.handleChange}
                             >
-                                {/* <MenuItem value={10}>Ten</MenuItem>
-                                <MenuItem value={20}>Twenty</MenuItem>
-                                <MenuItem value={30}>Thirty</MenuItem> */}
                                 {
                                     this.state.commits.map((c) => (
-                                        <MenuItem key={c} value={c}>
-                                            {c}
+                                        <MenuItem key={c.commitId} value={c.commitId}>
+                                            {c.commitId}
                                         </MenuItem>
                                     ))
                                 }
