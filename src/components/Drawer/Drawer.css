@@ -17,6 +17,10 @@
             height: 108px;
             border-radius: 50%;
         }
+        .drawerIcon > div > img {
+            display: block;
+            width: 100%;
+        }
 
     .drawerTitle {
         color: white;

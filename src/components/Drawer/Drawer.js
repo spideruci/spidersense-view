@@ -19,7 +19,9 @@ class Drawer extends React.Component {
          return (
             <div className="drawer">
                 <div className="drawerIcon">
-                    <div></div>
+                    <div>
+                        <img src={process.env.PUBLIC_URL + "/circle_badges/spider_circle_red.svg"}/>
+                    </div>
                 </div>
                 <div className="drawerTitle">
                     <p>SpiderSense</p>

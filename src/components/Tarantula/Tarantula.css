@@ -2,227 +2,173 @@
  * Base
 ============================================================================ */
 #tarantula {
-    /* background-color: #f2f2f2; */
-    /* min-height: 100vh; */
-    /* padding: 24px; */
-    /* display: flex;
-    flex-direction: row;
-    align-items: stretch; */
-    /* overflow: hidden; */
-    /* height: 100%; */
-    /* border: 1px dashed; */
 }
+
+/* ============================================================================
+ * Directory Actions and Commit Select
+============================================================================ */
 #commitContainer {
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
-    padding: 0px 12px;
+    justify-content: space-between;
+    /* padding: 0px 12px; */
     margin-bottom: 12px;
 }
-#selectCommit {
-    min-width: 120px;
-}
+    /* Clear, Passed, and Failed Actions */
+    #directoryActions {
+        align-self: center;
+    }
+        .directoryButton {
+            font-size: 0.8rem;
+        }
+
+    /* Select input for commit id */
+    #selectCommit,
+    .taranMenuItem {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 480px;
+        min-width: 244px;
+    }
+            #selectCommit > div:nth-of-type(1),
+            .taranMenuItem > div:nth-of-type(1) {
+                margin-right: 24px;
+            }
+                .menuItemMessage {
+                    font-size: 0.8rem;
+                    font-weight: bold;
+                }
+                .menuItemCommitter {
+                    font-size: 0.8em;
+                    font-weight: bold;
+                }
+                .menuItemDate {
+                    font-size: 0.7rem;
+                }
+            #selectCommit > div:nth-of-type(2),
+            .taranMenuItem > div:nth-of-type(2) {
+                margin-left: 24px;
+                /* margin-right: 24px; */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+                .menuItemCommitId {
+                    color: #0047AB;
+                }
+
+/* ============================================================================
+ * Tarantula Wrapper (for directory view, minimap, and display view)
+============================================================================ */
 #tarantulaWrapper {
     display: flex;
     flex-direction: row;
     align-items: stretch;
 }
 
-/* ============================================================================
- * Directory Container
-============================================================================ */
-#directoryContainerWrapper {
-    /* align-self: stretch; */
-    /* height: 100%;
-    overflow-x: scroll;
-    overflow-y: auto; */
-}
-/* #directoryContainer { */
-    /* flex-grow: 1; */
-    /* align-self: stretch; */
-    /* background-color: #FFFFFF; */
-/* } */
-#directoryActions {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    padding: 4px 8px;
-}
-    .clearAll {
-        color: #cf0000;
+    /* ============================================================================
+    * Directory Container
+    ============================================================================ */
+    #directoryContainer {
+        background-color: #FFFFFF;
+        overflow-x: scroll;
+        overflow-y: auto;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        margin-right: 12px;
     }
-#directoryContainer {
-    /* flex-shrink: 10; */
-    /* display: flex;
-    flex-direction: column;
-    height: 100%; */
-    /* max-height: 100vh; */
-    /* flex-grow: 0;
-    flex-shrink: 1; */
-    /* flex: 1 1 auto; */
-    /* align-self: flex-start; */
-    /* height: 100%; */
-    background-color: #FFFFFF;
-    /* display: flex;
-    flex-direction: column; */
-    overflow-x: scroll;
-    overflow-y: auto;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    margin-right: 12px;
-}
+        .sourceNameContainer {
+        }
+            .testcaseNameContainer {
+                margin-left: 16px;
+            }
 
-    .directoryTests {
-        /* border: 1px dashed; */
-    }
-        .directoryTestCases {
-            margin-left: 12px;
-        }
-    .directoryCheckboxLabel {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        padding: 4px 8px;
-    }
-        .directoryCheckboxLabel input {
-            -webkit-appearance: none;
-            background-color: #fafafa;
-            border: 1px solid #cacece;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px -15px 10px -12px rgba(0,0,0,0.05);
-            padding: 9px;
-            border-radius: 3px;
-            display: inline-block;
-            position: relative;
-            margin-right: 4px;
-        }
-        .directoryCheckboxLabel input:active, 
-        .directoryCheckboxLabel input:checked:active {
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .directoryCheckboxLabel input:checked {
-            background-color: #e9ecee;
-            border: 1px solid #adb8c0;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px -15px 10px -12px rgba(0,0,0,0.05), inset 15px 10px -12px rgba(255,255,255,0.1);
-            color: #99a1a7;
-        }
-        .directoryCheckboxLabel input:checked:after {
-            content: '\2714';
-            font-size: 14px;
-            position: absolute;
-            top: 0px;
-            left: 3px;
-            color: #99a1a7;
-        }
-        
-        .directoryCheckboxLabel label {
-            font-size: 10px;
+        .checkboxWrapper {
+            white-space: nowrap;
+            padding: 1px;
+            margin: 1px;
         }
 
 /* ============================================================================
- * CoverageInput
+ * Visualization Wrapper (for minimap and display view)
 ============================================================================ */
-/* #coverageInput {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-}
-    #coverageInput button {
-        background-color: #4CAF50;
-        border: none;
-        color: white;
-        padding: 8px 12px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0px 8px;
-    }
-    #coverageInput button:hover {
-        cursor: pointer;
-    } */
-
-/* ============================================================================
- * Horizontal Scroll View
-============================================================================ */
-#coverageContainer {
-    /* flex-grow: 0; */
-    /* border: 1px dashed red; */
-    /* flex-shrink: 0; */
-}
-#horizontalScrollView {
-    background-color: #FFFFFF;
-    display: flex;
-    overflow-x: scroll;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    margin-bottom: 12px;
+#visualizationWrapper {
 }
     /* ============================================================================
-    * File Container
+    * Horizontal Scroll View
     ============================================================================ */
-    .fileContainer {
+    #horizontalScrollView {
         background-color: #FFFFFF;
-        padding: 8px;
-    }
-    .fileContainer:hover {
-        background-color: #E9E9E9;
-        cursor: pointer;
+        display: flex;
+        overflow-x: scroll;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        margin-bottom: 12px;
     }
         /* ============================================================================
-        * File Title
+        * File Container
         ============================================================================ */
-        .fileContainer > div:nth-of-type(1) > p {
-            font-size: 10px;
-            font-weight: bold;
-            margin: 2px 0px;
+        .fileContainer {
+            background-color: #FFFFFF;
+            padding: 8px;
         }
-    
-        /* ============================================================================
-        * Minimap 
-        ============================================================================ */ 
-        .svgContainer {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
+        .fileContainer:hover {
+            background-color: #E9E9E9;
+            cursor: pointer;
         }
-            .svgContainer > div {
-                margin-right: 3px;
-                border: 1px solid #B4B4B4;
-                overflow: hidden;
+            /* ============================================================================
+            * File Title
+            ============================================================================ */
+            .fileContainer > div:nth-of-type(1) > p {
+                font-size: 10px;
+                font-weight: bold;
+                margin: 2px 0px;
             }
-                .svgContainer > div > svg > text {
-                    white-space: pre;
-                    dominant-baseline: hanging;
+        
+            /* ============================================================================
+            * Minimap 
+            ============================================================================ */ 
+            .svgContainer {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+            }
+                .svgContainer > div {
+                    margin-right: 3px;
+                    border: 1px solid #B4B4B4;
+                    overflow: hidden;
                 }
-                    .svgContainer > div > svg > text > tspan {
-                        /* display: block; */
+                    .svgContainer > div > svg > text {
+                        white-space: pre;
+                        dominant-baseline: hanging;
                     }
-                .sliderRect {
-                    fill: #F00;
-                    opacity: 0.1;
-                    cursor: pointer;
-                }
+                        .svgContainer > div > svg > text > tspan {
+                            /* display: block; */
+                        }
+                    .sliderRect {
+                        fill: #F00;
+                        opacity: 0.1;
+                        cursor: pointer;
+                    }
 
-/* ============================================================================
- * Scroll Container
-============================================================================ */
-#scrollContainer {
-    background-color: #FFFFFF;
-    /* margin: 24px 0px; */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    height: 512px;
-    overflow-y: scroll;
-}
-    #scrollContainer table {
-        border-collapse: collapse;
-        /* border: 1px dashed red; */
+    /* ============================================================================
+    * Scroll Container (display view)
+    ============================================================================ */
+    #scrollContainer {
+        background-color: #FFFFFF;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        height: 512px;
+        overflow-y: scroll;
     }
-    .coverableTr {
-        background-color: rgb(124, 199, 124);
-    }
-    .coverable {
-        fill: rgb(124, 199, 124);
-        opacity: 0.3;
-    }
-    .nonCoverable {
-        fill: red;
-    }
+        #scrollContainer table {
+            border-collapse: collapse;
+        }
+            .coverableTr {
+                background-color: rgb(124, 199, 124);
+            }
+            .coverable {
+                fill: rgb(124, 199, 124);
+                opacity: 0.3;
+            }
+            .nonCoverable {
+                fill: red;
+            }

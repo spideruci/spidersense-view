@@ -1,9 +1,9 @@
 import React, { Component, createRef } from 'react';
 
 import * as d3 from 'd3';
-// import Request from '../../network/request';
 import FileNameParser from '../../util/file-name-parser';
 import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
+import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
 
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -11,9 +11,12 @@ import MenuItem from '@material-ui/core/MenuItem';
 // import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+import Button from '@material-ui/core/Button';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 
 import { spidersenseWorkerUrls } from '../../util/vars';
 import "./Tarantula.css";
+import "./MaterialCheckbox.css";
 
 class Tarantula extends Component {
     commitWrapper = createRef();
@@ -56,16 +59,16 @@ class Tarantula extends Component {
 
         // Variables
         this.parser = new FileNameParser();
-        this.useStylesClasses = makeStyles((theme) => ({
-            formControl: {
-              margin: theme.spacing(1),
-              minWidth: 120,
-              width: 200
-            },
-            selectEmpty: {
-              marginTop: theme.spacing(2),
-            },
-        }));
+        // this.useStylesClasses = makeStyles((theme) => ({
+        //     formControl: {
+        //       margin: theme.spacing(1),
+        //       minWidth: 244,
+        //       width: 400
+        //     },
+        //     selectEmpty: {
+        //       marginTop: theme.spacing(2),
+        //     },
+        // }));
 
         // Bind methods
         this.generateDirectoryView = this.generateDirectoryView.bind(this);
@@ -78,7 +81,11 @@ class Tarantula extends Component {
         this.requestCoverage = this.requestCoverage.bind(this);
         this.displayCoverageOnMinimap = this.displayCoverageOnMinimap.bind(this);
         this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
+
         this.handleChange = this.handleChange.bind(this);
+        this.onClearButtonClicked = this.onClearButtonClicked.bind(this);
+        this.onPassedButtonClicked = this.onPassedButtonClicked.bind(this);
+        this.onFailedButtonClicked = this.onFailedButtonClicked.bind(this);
     } 
 
     componentDidMount() {
@@ -248,7 +255,7 @@ class Tarantula extends Component {
         this.removeExistingCoverage();
 
         // Get the test ids of the activated (checked) tests 
-        let activatedTestCases = d3.selectAll(".testCase")
+        let activatedTestCases = d3.selectAll(".testcase")
             .select("input")
             .nodes()
             .filter(n => n.checked)
@@ -276,6 +283,7 @@ class Tarantula extends Component {
             for (let i = 0; i < response.length; i++) {
                 console.log("Response #" + i + ":\n" + JSON.stringify(response[i]));
 
+                // TODO: Call suspiciousness module and save state before displaying coverage
                 this.displayCoverageOnMinimap(response[i], activatedTestCases[i]);
             }
         }).catch((error) => {
@@ -306,38 +314,30 @@ class Tarantula extends Component {
             testcasesData.push(o);
         }
         console.log("testcasesData: " + JSON.stringify(testcasesData));
-
-        // Set height for directory container
-        // let directoryContainer = d3.select("#directoryContainer");
-            // .style("height", this.DIRECTORY_HEIGHT.toString() + "px");
-
-        // Add contents for directory actions
-        // let directoryActions = d3.select("#directoryActions")
-        //     .append("p")
-        //     .text("Clear All")
-        //     .classed("clearAll", true);
         
-        // Bind data to divs under directory view
-        let tests = d3.select("#directoryContainer")
+        // Bind data to divs under directory container
+        let directorySources = d3.select("#directoryContainer")
             .style("height", this.DIRECTORY_HEIGHT.toString() + "px")
             .selectAll("div")
             .data(testcasesData)
             .enter()
             .append("div")
-            .classed("directoryTests sourceName", true);
+            .classed("sourceNameContainer", true);
         
         // For each source name, add a checkbox (when checked, will check all testcases)
-        let testsCheckContainer = tests.append("div")
-            .classed("directoryCheckboxLabel", true);
-        testsCheckContainer.append("input")
+        let sourcesContainers = directorySources.append("div")
+            .classed("checkboxWrapper sourceName", true);
+        let sourcesLabels = sourcesContainers.append("label")
+            .classed("pure-material-checkbox", true);
+        sourcesLabels.append("input")
             .attr("type", "checkbox")
             .attr("key", function(t) {return Object.keys(t)[0]});
-        testsCheckContainer.append("label")
+        sourcesLabels.append("span")
             .text(function(t) {return Object.keys(t)[0]});
 
         // For each source name, add checkboxes equal to # of testcases 
-        let testcases = tests.append("div")
-            .classed("directoryTestCases", true)
+        let testcasesContainer = directorySources.append("div")
+            .classed("testcaseNameContainer", true)
             .selectAll("div")
             .data(function(t) {
                 let k = Object.keys(t)[0];
@@ -345,11 +345,13 @@ class Tarantula extends Component {
             })
             .enter()
             .append("div")
-            .classed("directoryCheckboxLabel testCase", true);
-        testcases.append("input")
+            .classed("checkboxWrapper testcase", true);
+        let testcasesLabels = testcasesContainer.append("label")
+            .classed("pure-material-checkbox", true);
+        testcasesLabels.append("input")
             .attr("type", "checkbox")
             .attr("key", function(t) {return t.testcaseId});
-        testcases.append("label")
+        testcasesLabels.append("span")
             .text(function(t) {return t.signature});
 
         // Update state for testcases
@@ -362,7 +364,7 @@ class Tarantula extends Component {
             .on('click', () => {
                 this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
             });
-        d3.selectAll(".testCase input")
+        d3.selectAll(".testcase input")
             .on('click', () => {
                 this.onTestCaseChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
             });
@@ -787,6 +789,7 @@ class Tarantula extends Component {
     displayCoverageOnMinimap(response, testCaseId) {
         console.log("displayCoverageOnMinimap()");
 
+        // TODO: Change to call suspiciousness module
         let adapter = new TestcaseCoverageAdapter(testCaseId);
         adapter.getLineCoverageByFile(response);
 
@@ -969,7 +972,7 @@ class Tarantula extends Component {
         console.log("Test cases: " + testcases);
 
         // Handle on all input checkbox nodes that are linked to a testcase id
-        let allTestCheckboxes = d3.selectAll(".testCase")
+        let allTestCheckboxes = d3.selectAll(".testcase")
             .select("input").nodes();
 
         // Check only checkboxes with testcase keys contained in testcases
@@ -1047,6 +1050,26 @@ class Tarantula extends Component {
         this.displayCoverageOnDisplay();
     }
 
+    onClearButtonClicked() {
+        console.log("onClearButtonClicked()");
+
+        d3.selectAll(".sourceName")
+            .select("input")
+            .property("checked", false);
+
+        d3.selectAll(".testcase")
+            .select("input")
+            .property("checked", false);
+    }
+
+    onPassedButtonClicked() {
+        console.log("onPassedButtonClicked()");
+    }
+
+    onFailedButtonClicked() {
+        console.log("onFailedButtonClicked()");
+    }
+
     /** =======================================================================
      * 
      * RENDER
@@ -1056,8 +1079,18 @@ class Tarantula extends Component {
         return (
             <div id="tarantula">
                 <div id="commitContainer">
+                    <div id="directoryActions">
+                        <ButtonGroup size="small" variant="text" color="primary" aria-label="small text primary button group">
+                            <Button className="directoryButton" onClick={this.onClearButtonClicked}>Clear</Button>
+                            <Button className="directoryButton" onClick={this.onPassedButtonClicked}>Passed</Button>
+                            <Button className="directoryButton" onClick={this.onFailedButtonClicked}>Failed</Button>
+                        </ButtonGroup>
+                    </div>
+
                     <div ref={this.commitWrapper}>
-                        <FormControl className={this.useStylesClasses.formControl}>
+                        <FormControl 
+                            // className={this.useStylesClasses.formControl}
+                            >
                             <InputLabel id="simpleSelectLabelCommit">Commit</InputLabel>
                             <Select
                                 labelId="simpleSelectLabelCommit"
@@ -1067,8 +1100,19 @@ class Tarantula extends Component {
                             >
                                 {
                                     this.state.commits.map((c) => (
-                                        <MenuItem key={c.commitId} value={c.commitId}>
-                                            {c.commitId}
+                                        <MenuItem className="taranMenuItem" key={c.commitId} value={c.commitId}>
+                                            <div>
+                                                <p className="menuItemMessage">{shortenMessage(c.message)}</p>
+                                                <p>
+                                                    <span className="menuItemCommitter">
+                                                        {(c.commiter != null && c.commiter != undefined) ? c.committer : "Invalid user"}
+                                                    </span>
+                                                    <span className="menuItemDate"> committed on {convertTimestampToDate(c.timestamp)}</span>
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="menuItemCommitId">{shortenCommitId(c.commitId)}</p>
+                                            </div>
                                         </MenuItem>
                                     ))
                                 }
@@ -1076,13 +1120,11 @@ class Tarantula extends Component {
                         </FormControl>
                     </div>
                 </div>
-                <div id="tarantulaWrapper">
-                    {/* <div id="directoryContainer"> */}
-                        {/* <div id="directoryActions"></div> */}
-                        <div id="directoryContainer"></div>
-                    {/* </div> */}
 
-                    <div id="coverageContainer">
+                <div id="tarantulaWrapper">
+                    <div id="directoryContainer"></div>
+
+                    <div id="visualizationWrapper">
                         <div id="horizontalScrollView"></div> 
                         <div id="scrollContainer"></div>
                     </div>
