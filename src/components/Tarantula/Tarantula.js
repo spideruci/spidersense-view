@@ -84,8 +84,8 @@ class Tarantula extends Component {
 
         this.handleChange = this.handleChange.bind(this);
         this.onClearButtonClicked = this.onClearButtonClicked.bind(this);
-        this.onPassedButtonClicked = this.onPassedButtonClicked.bind(this);
-        this.onFailedButtonClicked = this.onFailedButtonClicked.bind(this);
+        // this.onPassedButtonClicked = this.onPassedButtonClicked.bind(this);
+        // this.onFailedButtonClicked = this.onFailedButtonClicked.bind(this);
     } 
 
     componentDidMount() {
@@ -304,7 +304,7 @@ class Tarantula extends Component {
      * @param   {Object}    response    The response received
      */
     generateDirectoryView(response) {
-        console.log("generateDirectoryView() - " + JSON.stringify(response));
+        console.log("generateDirectoryView()");
 
         // Reformat so that each property of object is an object in an array
         let testcasesData = [];
@@ -346,6 +346,14 @@ class Tarantula extends Component {
             .enter()
             .append("div")
             .classed("checkboxWrapper testcase", true);
+
+        // Add Pass or Fail status of testcase
+        testcasesContainer.append("p")
+            .text(function(t) { return (t.passed === 1) ? "P" : "F" })
+            .style("color", function(t) {
+                return (t.passed === 1) ? "green" : "red";
+            });
+
         let testcasesLabels = testcasesContainer.append("label")
             .classed("pure-material-checkbox", true);
         testcasesLabels.append("input")
@@ -907,12 +915,26 @@ class Tarantula extends Component {
         }));
     }
 
+    /**
+     * Removes coverage the appears on each minimap of each file container
+     * and on the display
+     */
     removeExistingCoverage() {
+        // Remove coverage nodes on minimap
         let svgsD3 = d3.selectAll(".fileContainer")
             .selectAll(".svgContainer > div > svg");
-            svgsD3.selectAll('rect.coverable')
+        svgsD3.selectAll('rect.coverable')
             .remove();
+        
+        // If the display view is shown, remove coverage nodes 
+        if (this.state.selectionIndex !== -1) {
+            console.log("Removing coverableTr class");
+            let trD3 = d3.select("#scrollContainer table tbody")
+                .selectAll("tr.coverableTr")
+                .classed("coverableTr", false);
+        }
 
+        // Update state to clear adapters
         this.setState((state) => ({
             adapters: []
         }));
@@ -971,17 +993,13 @@ class Tarantula extends Component {
         });
         console.log("Test cases: " + testcases);
 
-        // Handle on all input checkbox nodes that are linked to a testcase id
-        let allTestCheckboxes = d3.selectAll(".testcase")
-            .select("input").nodes();
-
         // Check only checkboxes with testcase keys contained in testcases
-        for (let i = 0; i < allTestCheckboxes.length; i++) {
-            let key = allTestCheckboxes[i].getAttribute("key");
-            if (testcases.includes(key)) {
-                allTestCheckboxes[i].checked = checked;
-            }
-        }
+        d3.selectAll(".testcase")
+            .select("input")
+            .filter(function(d, i) {
+                return testcases.includes(d3.select(this).attr("key"));
+            })
+            .property("checked", checked);
 
         // Request coverage data
         this.requestCoverage();
@@ -1060,14 +1078,53 @@ class Tarantula extends Component {
         d3.selectAll(".testcase")
             .select("input")
             .property("checked", false);
+
+        // Request coverage data
+        this.requestCoverage();
     }
 
-    onPassedButtonClicked() {
-        console.log("onPassedButtonClicked()");
-    }
+    onPassedOrFailedButtonClicked(passFailStatus) {
+        console.log("onPassedOrFailedButtonClicked() - status: " + passFailStatus);
 
-    onFailedButtonClicked() {
-        console.log("onFailedButtonClicked()");
+        let status = (passFailStatus) ? 1 : 0;
+
+        // Get test case ids for tests that passed from 
+        let testcaseIds = [];
+        let testcases = this.state.testcases;
+        for (let t of testcases) {
+            let k = Object.keys(t)[0];
+            let v = t[k];
+
+            console.log("k: " + JSON.stringify(k) + "\nv: " + JSON.stringify(v));
+
+            let ids = v.filter((o) => {
+                return o.passed === status;
+            }).map((o) => {
+                return o.testcaseId;
+            });
+            console.log("ids: " + ids);
+            testcaseIds = testcaseIds.concat(ids);
+        }
+        console.log("testcaseIds: " + testcaseIds);
+
+        // For checkboxes whose id is included in testcaseIds, check 
+        let includedCheckboxes = d3.selectAll(".testcase")
+            .select("input")
+            .filter(function(d, i) {
+                return testcaseIds.includes(d3.select(this).attr("key"));
+            })
+            .property("checked", true);;
+        
+        // For checkboxes whose id is not included in testcaseIds, uncheck
+        let excludedCheckboxes = d3.selectAll(".testcase")
+            .select("input")
+            .filter(function(d, i) {
+                return !testcaseIds.includes(d3.select(this).attr("key"));
+            })
+            .property("checked", false);;
+
+        // Request coverage data
+        this.requestCoverage();
     }
 
     /** =======================================================================
@@ -1082,8 +1139,8 @@ class Tarantula extends Component {
                     <div id="directoryActions">
                         <ButtonGroup size="small" variant="text" color="primary" aria-label="small text primary button group">
                             <Button className="directoryButton" onClick={this.onClearButtonClicked}>Clear</Button>
-                            <Button className="directoryButton" onClick={this.onPassedButtonClicked}>Passed</Button>
-                            <Button className="directoryButton" onClick={this.onFailedButtonClicked}>Failed</Button>
+                            <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
+                            <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
                         </ButtonGroup>
                     </div>
 
