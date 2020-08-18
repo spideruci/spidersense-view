@@ -2,11 +2,10 @@ import React from 'react';
 
 import * as d3 from 'd3';
 
-import Request from '../../network/request';
-
 import Overview from '../Overview/Overview';
 import Tarantula from '../Tarantula/Tarantula';
 
+import { spidersenseWorkerUrls } from '../../util/vars';
 import "./Project.css";
 
 
@@ -19,21 +18,10 @@ class Project extends React.Component {
     constructor(props) {
         super(props);
 
-        // Initialize tabs
-        this.tabs = [
-            {
-                tabName: "Overview",
-                container: <Overview />
-            },
-            {
-                tabName: "Tarantula",
-                container: <Tarantula />
-            }
-        ];
-
         // Initialize state
         this.state = {
-            currentTabIndex: 0
+            projectTitle: "Test",
+            currentTabIndex: -1
         };
 
         // Bind methods
@@ -43,19 +31,8 @@ class Project extends React.Component {
     } 
 
     componentDidMount() {
-        // let req = new CorsRequest();
-        let url = "http://127.0.0.1:5000/testcaseCoverage/10345";
-        // req.makeCorsRequest(url);
-
-        let req = new Request();
-        let promise = req.prepareSingleRequest(url, 'json');
-        promise.then((value) => {
-            // this.displayCoverage(value, testCaseId);
-            console.log("Successfully processed response\nvalue: " + value.response);
-            console.log("Number of testcases = " + value.response.testcases.length);
-        });
-
-        this.initializeTabs();
+        let projectId = 17;
+        this.requestCommits(projectId);
     }
 
     /** =======================================================================
@@ -63,8 +40,45 @@ class Project extends React.Component {
      * Methods
      * 
      ======================================================================= */
-    initializeTabs() {
-        console.log("initializeTabs() " + this.tabs);
+
+    /**
+     * Request commits from SpiderSense-worker. The data returned is expected to 
+     * be the commit ids (shas). Update the state to retain those commits.
+     * @param   {number}    projectId   The project id
+     */
+    requestCommits(projectId) {
+        console.log("requestCommits()");
+        let url = `${spidersenseWorkerUrls.getCommits}/${projectId}`;
+
+        fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {
+            console.log("Callback:\n" + JSON.stringify(data));
+
+            // Initialize the tabs
+            this.initializeTabs(data.builds);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    initializeTabs(commits) {
+        console.log("initializeTabs()");
+
+        // Initialize tabs
+        this.tabs = [
+            {
+                tabName: "Overview",
+                container: <Overview commits={commits} />
+            },
+            {
+                tabName: "Tarantula",
+                container: <Tarantula commits={commits} />
+            }
+        ];
+
         let tabs = d3.select("#projectTabs")
             .selectAll("div")
             .data(this.tabs)
@@ -77,6 +91,11 @@ class Project extends React.Component {
             .text(function(t) {
                 return t.tabName;
             });
+        
+        // Set state so that current tab is the Overview (forces re-render)
+        this.setState((state) => ({
+            currentTabIndex: 0
+        }));
     }
 
     updateCurrentTab(index) {
@@ -88,6 +107,10 @@ class Project extends React.Component {
 
     populateProjectContainer() {
         console.log("populateProjectContainer(): " + this.state.currentTabIndex);
+        if (this.tabs == null || this.tabs == undefined || this.tabs.length == 0) {
+            return;
+        }
+
         return this.tabs[this.state.currentTabIndex].container;
     }
 
@@ -101,7 +124,7 @@ class Project extends React.Component {
             <div id="project">
                 <div id="projectHeader">
                     <div>
-                        <p>Project Title</p>
+                        <p>{this.state.projectTitle}</p>
                     </div>
                 </div>
 

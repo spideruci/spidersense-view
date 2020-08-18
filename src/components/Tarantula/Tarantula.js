@@ -31,6 +31,8 @@ class Tarantula extends Component {
 
         // Initialize state
         this.state = {
+            commits: props.commits,
+            selectedCommit: '',
             allFiles: [],
             selectionIndex: -1,
             numberOfSvgs: 0,
@@ -38,8 +40,6 @@ class Tarantula extends Component {
             scrollContainerHeight: 0,
             adapters: [],
             testcases: [],
-            commits: [],
-            selectedCommit: ''
         };
 
         // Constants
@@ -89,9 +89,6 @@ class Tarantula extends Component {
     } 
 
     componentDidMount() {
-        // TODO: Get project id from component above
-        let projectId = 17;
-        this.requestCommits(projectId);
     }
 
     /** =======================================================================
@@ -99,31 +96,6 @@ class Tarantula extends Component {
      * METHODS - Requests and Response
      * 
      ======================================================================= */
-
-    /**
-     * Request commits from SpiderSense-worker. The data returned is expected to 
-     * be the commit ids (shas). Update the state to retain those commits.
-     * @param   {number}    projectId   The project id
-     */
-    requestCommits(projectId) {
-        console.log("requestCommits()");
-        let url = `${spidersenseWorkerUrls.getCommits}/${projectId}`;
-
-        fetch(url, {
-            method: 'GET'
-        }).then((response) => {
-            return response.json();
-        }).then((data) => {
-            console.log("Callback:\n" + JSON.stringify(data));
-
-            // Update state to retain commit information
-            this.setState((state) => ({
-                commits: data.builds
-            }));
-        }).catch((error) => {
-            console.error(error);
-        });
-    }
 
     /**
      * Use the selected commit id as a parameter for the GraphQL query to 
@@ -318,6 +290,7 @@ class Tarantula extends Component {
         // Bind data to divs under directory container
         let directorySources = d3.select("#directoryContainer")
             .style("height", this.DIRECTORY_HEIGHT.toString() + "px")
+            .style("padding", "8px")
             .selectAll("div")
             .data(testcasesData)
             .enter()
@@ -970,7 +943,6 @@ class Tarantula extends Component {
     }
 
     /**
-     * TODO: Fix bug with removing coverage from display view on deselection
      * Event callback for when the checkbox for a source name is clicked.
      * Looks through the state's testcases to find the affiliated testcaseIds for the
      * clicked source, and checks the input checkboxes whose keys match those testcaseIds.
