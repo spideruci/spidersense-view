@@ -4,12 +4,45 @@ import { NavLink } from 'react-router-dom';
 import "./Drawer.css";
 
 import HomeOutlinedIcon from '@material-ui/icons/HomeOutlined';
-import ViewListIcon from '@material-ui/icons/ViewList';
+import GroupIcon from '@material-ui/icons/Group';
 import AssessmentOutlinedIcon from '@material-ui/icons/AssessmentOutlined';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 
 
 class Drawer extends React.Component {
+        /** =======================================================================
+     * 
+     * LIFECYCLE
+     * 
+     ======================================================================= */
+     constructor(props) {
+        super(props);
+
+        // Bind methods
+        this.getProjectPath = this.getProjectPath.bind(this);
+    } 
+
+    /** =======================================================================
+     * 
+     * METHODS
+     * 
+     ======================================================================= */
+     getProjectPath() {
+        console.log("getProjectPath()");
+
+        // Get a cookie
+        const { cookies } = this.props;
+        let id = cookies.get("id");
+
+        console.log("cookies id: " + id);
+
+        if (id == undefined) {
+            return "/proj";
+        }
+
+        return `/project/${id}`;
+     }
+
     /** =======================================================================
      * 
      * RENDER
@@ -34,17 +67,17 @@ class Drawer extends React.Component {
                         </div>
                         <p className="navText">Home</p>
                     </NavLink>
-                    <NavLink to="/list" className="styledNavLink cursorPointer">
-                        <div className="navIcon">
-                            <ViewListIcon style={{fill: "white"}}/>
-                        </div>
-                        <p className="navText">List</p>
-                    </NavLink>
-                    <NavLink to="/project" className="styledNavLink cursorPointer">
+                    <NavLink to={this.getProjectPath()} className="styledNavLink cursorPointer">
                         <div className="navIcon">
                             <AssessmentOutlinedIcon style={{fill: "white"}}/>
                         </div>
                         <p className="navText">Project</p>
+                    </NavLink>
+                    <NavLink to="/about" className="styledNavLink cursorPointer">
+                        <div className="navIcon">
+                            <GroupIcon style={{fill: "white"}}/>
+                        </div>
+                        <p className="navText">About</p>
                     </NavLink>
                 </div>
 

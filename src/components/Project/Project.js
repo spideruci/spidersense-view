@@ -18,9 +18,15 @@ class Project extends React.Component {
     constructor(props) {
         super(props);
 
+        console.log("Match params id: " + props.match.params.id);
+
         // Initialize state
         this.state = {
-            projectTitle: "Test",
+            project: {
+                projectId: props.match.params.id,
+                projectName: "",
+                projectLink: ""
+            },
             currentTabIndex: -1
         };
 
@@ -31,8 +37,11 @@ class Project extends React.Component {
     } 
 
     componentDidMount() {
-        let projectId = 17;
-        this.requestCommits(projectId);
+        if (this.props.match.params == null) {
+            return;
+        }
+
+        this.requestCommits(this.state.project.projectId);
     }
 
     /** =======================================================================
@@ -57,8 +66,48 @@ class Project extends React.Component {
         }).then((data) => {
             console.log("Callback:\n" + JSON.stringify(data));
 
+            // Request project information again
+            this.requestProjectDetails(projectId, data.builds);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    // TODO: update to query project based on id
+    requestProjectDetails(projectId, builds) {
+        console.log("requestProjectDetails()");
+        let url = spidersenseWorkerUrls.getAllProjects;
+
+        fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {
+            console.log("Callback:\n" + JSON.stringify(data));
+
+            let proj = data.projects.filter((d, i) => {
+                return d.projectId === projectId;
+            });
+
+            if (proj.length === 0) {
+                console.error("Unable to find project id");
+                return;
+            }
+
+            let projName = proj[0].projectName;
+            let projLink = proj[0].projectLink;
+
+            // Update state to retain projects
+            this.setState((state) => ({
+                project: {
+                    projectId: state.projectId,
+                    projectName: projName,
+                    projectLink: projLink
+                } 
+            }))
+
             // Initialize the tabs
-            this.initializeTabs(data.builds);
+            this.initializeTabs(builds);
         }).catch((error) => {
             console.error(error);
         });
@@ -71,7 +120,7 @@ class Project extends React.Component {
         this.tabs = [
             {
                 tabName: "Overview",
-                container: <Overview commits={commits} />
+                container: <Overview commits={commits} project={this.state.project}/>
             },
             {
                 tabName: "Tarantula",
@@ -124,7 +173,7 @@ class Project extends React.Component {
             <div id="project">
                 <div id="projectHeader">
                     <div>
-                        <p>{this.state.projectTitle}</p>
+                        <p>{this.state.project.projectName}</p>
                     </div>
                 </div>
 

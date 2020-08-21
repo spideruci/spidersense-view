@@ -1,5 +1,109 @@
-.home {
+/* ============================================================================
+ * Base
+============================================================================ */
+#home {
     background-color: #f2f2f2;
     min-height: 100vh;
-    padding: 24px;
+    padding: 12px 24px;
 }
+
+/* ============================================================================
+ * Project Header
+============================================================================ */
+#home #projectHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    /* padding: 12px 24px; */
+    margin-bottom: 8px;
+}
+    #home #projectHeader div {
+        padding: 4px;
+    }
+    #home #projectHeader div:hover {
+        cursor: pointer;
+    }
+    #home #projectHeader div:nth-of-type(1) {
+        margin-right: 12px;
+    }
+
+
+/* ============================================================================
+ * List View
+============================================================================ */
+#homeView {
+}
+    /* What both views share */
+    .projectUnit {
+        background-color: #FFFFFF;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+
+    /* Separate rules for List view */
+    .projectUnitList {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 12px;
+        margin: 12px 0px;
+    }
+    .projectUnitList:hover {
+        background-color: #E9E9E9;
+        cursor: pointer;
+    } 
+        .projectUnitList > p:nth-of-type(1) {
+            flex-basis: 25%;
+        }
+        .projectUnitList > p:nth-of-type(2) {
+            flex-basis: 40%;
+            color: #0091ea;
+        }
+        .projectUnitList > div {
+            justify-self: flex-end;
+            margin-left: auto;
+        }
+    /* Separate rules for Module view */
+    .moduleWrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+        /* border: 1px dashed; */
+    }
+    .projectUnitModule {
+        flex-basis: 30%;
+        min-width: 200px;
+        min-height: 244px;
+        display: flex;
+        flex-direction: column;
+        margin: 24px 8px;
+    }
+    .projectUnitModule:hover {
+        background-color: #E9E9E9;
+        cursor: pointer;
+    }
+        .projectUnitModule > div:nth-of-type(1) {
+            flex-grow: 1;
+            background-color: #444444;
+        }
+        .projectUnitModule > div:nth-of-type(2) {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            border-top: 1px solid #cccccc;
+        }
+        .projectUnitModule > div:nth-of-type(2) > p:nth-of-type(1) {
+            font-size: 1.1rem;
+            padding: 4px 8px;
+        }
+        .projectUnitModule > div:nth-of-type(2) > p:nth-of-type(2) {
+            color: #0091ea;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+        .projectUnitModule > div:nth-of-type(2) > div {
+            justify-self: flex-end;
+            margin-top: auto;
+            padding: 4px 8px;
+        }

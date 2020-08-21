@@ -84,8 +84,6 @@ class Tarantula extends Component {
 
         this.handleChange = this.handleChange.bind(this);
         this.onClearButtonClicked = this.onClearButtonClicked.bind(this);
-        // this.onPassedButtonClicked = this.onPassedButtonClicked.bind(this);
-        // this.onFailedButtonClicked = this.onFailedButtonClicked.bind(this);
     } 
 
     componentDidMount() {
@@ -256,6 +254,12 @@ class Tarantula extends Component {
                 console.log("Response #" + i + ":\n" + JSON.stringify(response[i]));
 
                 // TODO: Call suspiciousness module and save state before displaying coverage
+                // - code goes here -
+
+                // Save state of suspiciousness score
+                // don't worry bout this one
+
+                // Display the covreage on minimap
                 this.displayCoverageOnMinimap(response[i], activatedTestCases[i]);
             }
         }).catch((error) => {
@@ -857,8 +861,13 @@ class Tarantula extends Component {
             }
 
             // Change background color of nodes that are covered
+            // Also add click listeners
             for (let i = 0; i < coveredLines.length; i++) {
                 rows[coveredLines[i] - 1].classList.add("coverableTr");
+
+                rows[coveredLines[i] - 1].addEventListener("click", () => {
+                    this.onCoverableLineClicked(rows[coveredLines[i] - 1])
+                }, false);
             }
         }
     }
@@ -1099,6 +1108,15 @@ class Tarantula extends Component {
         this.requestCoverage();
     }
 
+    // TODO: on click of a coverable line
+    onCoverableLineClicked(node) {
+        // let p = document.createElement("p");
+        // let p = (
+        //     <p>Test</p>
+        // );
+        // node.appendChild(p);
+    }
+
     /** =======================================================================
      * 
      * RENDER
@@ -1134,7 +1152,7 @@ class Tarantula extends Component {
                                                 <p className="menuItemMessage">{shortenMessage(c.message)}</p>
                                                 <p>
                                                     <span className="menuItemCommitter">
-                                                        {(c.commiter != null && c.commiter != undefined) ? c.committer : "Invalid user"}
+                                                        {c.committer || "<invalid-user>"}
                                                     </span>
                                                     <span className="menuItemDate"> committed on {convertTimestampToDate(c.timestamp)}</span>
                                                 </p>

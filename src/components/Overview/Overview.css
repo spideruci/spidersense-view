@@ -1,10 +1,71 @@
 #projectInfoView {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 12px;
 }
+    #projectInfoDetailsContainer{
+        background-color: #FFFFFF;
+        flex-basis: 70%;
+        min-height: 144px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+        #projectInfoDetailsContainer > div:nth-of-type(1) {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+            #projectInfoDetailsContainer > div:nth-of-type(1) > p{
+                font-size: 1.5rem;
+                font-weight: bold;
+            }
+            #projectInfoDetailsContainer > div:nth-of-type(1) > .navIcon {
+                margin: 0px 24px;
+            }
+            #projectInfoDetailsContainer > div:nth-of-type(1) > .navIcon:hover {
+                cursor: pointer;
+            }
+
+    #projectInfoCardContainer {
+        flex-basis: 25%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        /* border: 1px dashed; */
+    }
+
+    .materialCard {
+        background-color: #FFFFFF;
+        width: 100%;
+        min-width: 144px;
+        display: flex;
+        flex-direction: row;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        padding: 12px;
+    }
+        .materialCard > div:nth-of-type(1) {
+            flex: 4;
+        }
+            .materialCardNumeral {
+                color: #222222;
+                font-weight: bold;
+                font-size: 1.5rem;
+            }
+            .materialCardDescription {
+                font-size: 0.9rem;
+            }
+    
+        .materialCard > div:nth-of-type(2) {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: flex-start;
+            /* border: 1px dashed; */
+        }
 
 #recentCommitsView {
     background-color: #FFFFFF;
@@ -12,7 +73,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
     #recentCommitsTitle {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         padding-bottom: 12px;
         margin-bottom: 12px;
         border-bottom: 1px solid #cccccc;
@@ -40,28 +101,4 @@
     .recentCommitsId {
         color: #0047AB;
         padding: 0px 24px;
-    }
-
-.materialCard {
-    background-color: #FFFFFF;
-    min-width: 300px;
-    display: flex;
-    flex-direction: row;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    padding: 12px;
-}
-    .materialCard > div:nth-of-type(1) {
-        flex: 4;
-    }
-        .materialCardNumeral {
-            color: #222222;
-            font-weight: bold;
-            font-size: 1.5rem;
-        }
-        .materialCardDescription {
-            font-size: 0.9rem;
-        }
-
-    .materialCard > div:nth-of-type(2) {
-        flex: 1;
     }

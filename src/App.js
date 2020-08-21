@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 
+import { withCookies } from 'react-cookie';
+
 // import logo from './logo.svg';
 import Error from "./components/Error/Error";
 import Drawer from "./components/Drawer/Drawer";
-import Home from "./components/Home/Home";
-import List from "./components/List/List"
+import Home from "./components/Home/Home"
 import Project from "./components/Project/Project";
+import ChooseProject from "./components/ChooseProject/ChooseProject";
+import About from "./components/About/About";
 
 import './App.css';
 
@@ -31,13 +34,16 @@ class App extends Component {
             <BrowserRouter>
                 <div className="app">
                     <div className="componentDrawer">
-                        <Drawer/>
+                        <Drawer cookies={this.props.cookies} />
                     </div>
                     <div className="componentContent">
                         <Switch>
-                            <Route path="/" component={ Home } exact />
-                            <Route path="/list" component={ List } />
-                            <Route path="/project" component={ Project } />
+                            <Route path="/" exact render={(props) => (
+                                <Home cookies={this.props.cookies} {...props} />
+                            )} />
+                            <Route path="/project/:id" component={ Project } />
+                            <Route path="/proj" component={ ChooseProject } />
+                            <Route path="/about" component={ About } />
                             <Route component={ Error } />
                         </Switch>
                     </div>
@@ -68,4 +74,4 @@ class App extends Component {
 //   );
 // }
 
-export default App;
+export default withCookies(App);

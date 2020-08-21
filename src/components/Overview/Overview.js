@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 
-import * as d3 from 'd3';
+import GitHubIcon from '@material-ui/icons/GitHub';
+import HistoryIcon from '@material-ui/icons/History';
+
+import {getUserFromGithubUrl} from '../../util/url-parsers';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from '../Tarantula/TaranMenuItem';
 
 import "./Overview.css";
@@ -15,14 +18,14 @@ class Overview extends Component {
         super(props);
 
         this.state = {
-            currentTextName: "Test",
-            currentLinesOfCode: 55,
-            recentCommits: []
+            project: props.project,
+            commits: props.commits
         }
+
+        this.openGithubLink = this.openGithubLink.bind(this);
     }
 
     componentDidMount() {
-        this.generateRecentCommitsView();
     }
 
     /** =======================================================================
@@ -30,101 +33,10 @@ class Overview extends Component {
      * METHODS
      * 
      ======================================================================= */
+    openGithubLink() {
+        console.log("openGithubLink()");
 
-    generateRecentCommitsView() {
-        // TODO: Get actual commits data
-        const TEMP_COMMITS_DATA = [
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-            {
-                commitId: "b589f83a9c6bb3631e8c796848c309c2a677b2a8",
-                committer: "VijayKrishna",
-                timestamp: "2020-08-18 08:56:40",
-                message: "Minor Edits"
-            },
-        ];
-
-        this.setState((state) => ({
-            recentCommits: TEMP_COMMITS_DATA
-        }));
-        // let recentCommitsItems = d3.select("#recentCommitsView")
-        //     .selectAll("div")
-        //     .data(TEMP_COMMITS_DATA)
-        //     .enter()
-        //     .append("div")
-        //     .classed("recentCommitsItem", true);
-
-        // let firstWrappers = recentCommitsItems.append("div");
-
-        // let recentCommitsMessages = firstWrappers.append("p")
-        //     .text(function(t) {
-        //         return t.message;
-        //     })
-        //     .classed("recentCommitsMessage", true);
-        // let recentCommitsDescription = firstWrappers.append("p");
-        // recentCommitsDescription.append("span")
-        //     .text(function (t) {
-        //         return t.
-        //     })
-        //     .classed("recentCommitsCommitter", true)
-        // recentCommitsDescription.append("span")
-        //     .classed("recentCommitsDate", true)
-
-        // let recentCommitsIds = recentCommitsItems.append("div")
-        //     .append("p")
-        //     .classed("recentCommitsId", true);
+        window.open(this.state.project.projectLink, '_blank');
     }
 
 
@@ -137,27 +49,40 @@ class Overview extends Component {
         return (
             <div className="fileInfoHeader">
                 <div id="projectInfoView">
-                    <div className="materialCard">
+                    <div id="projectInfoDetailsContainer">
                         <div>
-                            <p className="materialCardNumeral">100</p>
-                            <p className="materialCardDescription">Number of Commits</p>
+                            <p>{this.state.project.projectName}</p>
+                            <div className="navIcon">
+                                <GitHubIcon onClick={this.openGithubLink} />
+                            </div>
                         </div>
-                        <div>
-                            {/* <img className="materialCardIcon" /> */}
+                        <p>{getUserFromGithubUrl(this.state.project.projectLink)}</p>
+                    </div>
+
+                    <div id="projectInfoCardContainer">
+                        <div className="materialCard">
+                            <div>
+                                <p className="materialCardNumeral">{this.state.commits.length}</p>
+                                <p className="materialCardDescription">Number of Commits</p>
+                            </div>
+                            <div>
+                                {/* <img className="materialCardIcon" /> */}
+                                <HistoryIcon />
+                            </div>
                         </div>
                     </div>
-                    {/* <p>File Name:</p>
-                    <p>{this.state.currentTextName}</p> */}
                 </div>
                 <div id="recentCommitsView">
                     <p id="recentCommitsTitle">Recent Commits</p>
                     {
-                        this.state.recentCommits.map((c) => (
+                        this.state.commits.map((c) => (
                             <div className="recentCommitsItem">
                                 <div>
                                     <p className="recentCommitsMessage">{shortenMessage(c.message)}</p>
                                     <p>
-                                        <span className="recentCommitsCommitter">{c.committer}</span>
+                                        <span className="recentCommitsCommitter">
+                                            {c.committer || "<invalid-user>"}
+                                        </span>
                                         <span className="recentCommitsDate"> committed on {convertTimestampToDate(c.timestamp)}</span>
                                     </p>
                                 </div>
@@ -167,8 +92,6 @@ class Overview extends Component {
                             </div>
                         ))
                     }
-                    {/* <p>Lines of code:</p>
-                    <p>{this.state.currentLinesOfCode}</p> */}
                 </div>
             </div>
         );
