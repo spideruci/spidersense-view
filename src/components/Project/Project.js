@@ -41,7 +41,7 @@ class Project extends React.Component {
             return;
         }
 
-        this.requestCommits(this.state.project.projectId);
+        this.requestProjectDetails(this.state.project.projectId);
     }
 
     /** =======================================================================
@@ -49,6 +49,36 @@ class Project extends React.Component {
      * Methods
      * 
      ======================================================================= */
+
+    requestProjectDetails(projectId) {
+        console.log("requestProjectDetails()");
+        let url = `${spidersenseWorkerUrls.getProject}/${projectId}`;
+
+        fetch(url, {
+            method: 'GET'
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {
+            console.log("Callback:\n" + JSON.stringify(data));
+
+            let projects = data.projects;
+            let proj = projects[0];
+
+            // Update state to retain projects
+            this.setState((state) => ({
+                project: {
+                    projectId: state.projectId,
+                    projectName: proj.projectName,
+                    projectLink: proj.projectLink
+                } 
+            }))
+
+            // Request commits
+            this.requestCommits(projectId);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
 
     /**
      * Request commits from SpiderSense-worker. The data returned is expected to 
@@ -66,48 +96,8 @@ class Project extends React.Component {
         }).then((data) => {
             console.log("Callback:\n" + JSON.stringify(data));
 
-            // Request project information again
-            this.requestProjectDetails(projectId, data.builds);
-        }).catch((error) => {
-            console.error(error);
-        });
-    }
-
-    // TODO: update to query project based on id
-    requestProjectDetails(projectId, builds) {
-        console.log("requestProjectDetails()");
-        let url = spidersenseWorkerUrls.getAllProjects;
-
-        fetch(url, {
-            method: 'GET'
-        }).then((response) => {
-            return response.json();
-        }).then((data) => {
-            console.log("Callback:\n" + JSON.stringify(data));
-
-            let proj = data.projects.filter((d, i) => {
-                return d.projectId === projectId;
-            });
-
-            if (proj.length === 0) {
-                console.error("Unable to find project id");
-                return;
-            }
-
-            let projName = proj[0].projectName;
-            let projLink = proj[0].projectLink;
-
-            // Update state to retain projects
-            this.setState((state) => ({
-                project: {
-                    projectId: state.projectId,
-                    projectName: projName,
-                    projectLink: projLink
-                } 
-            }))
-
             // Initialize the tabs
-            this.initializeTabs(builds);
+            this.initializeTabs(data.builds);
         }).catch((error) => {
             console.error(error);
         });

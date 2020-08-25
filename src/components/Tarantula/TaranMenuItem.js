@@ -18,7 +18,7 @@ export {shortenCommitId};
  */
 function shortenMessage(commitMessage) {
     if (commitMessage == null || commitMessage == undefined) {
-        return "Invalid message";
+        return "<invalid-message>";
     }
 
     return (commitMessage.length <= 80) ? commitMessage : commitMessage.substring(0, 80);

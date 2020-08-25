@@ -72,13 +72,15 @@
     ============================================================================ */
     #directoryContainer {
         background-color: #FFFFFF;
+        /* background-color: #222222; */
         overflow-x: scroll;
         overflow-y: auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         margin-right: 12px;
         /* padding: 8px; */
     }
-        .sourceNameContainer {
+        .sourceNameContainer label > span {
+            /* color: #FFFFFF; */
         }
             .testcaseNameContainer {
                 /* margin-left: 16px; */
@@ -109,7 +111,8 @@
     * Horizontal Scroll View
     ============================================================================ */
     #horizontalScrollView {
-        background-color: #FFFFFF;
+        /* background-color: #FFFFFF; */
+        background-color: #222222;
         display: flex;
         overflow-x: scroll;
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
@@ -119,17 +122,20 @@
         * File Container
         ============================================================================ */
         .fileContainer {
-            background-color: #FFFFFF;
+            /* background-color: #FFFFFF; */
+            background-color: #222222;
             padding: 8px;
         }
         .fileContainer:hover {
-            background-color: #E9E9E9;
+            /* background-color: #E9E9E9; */
+            background-color: #363636;
             cursor: pointer;
         }
             /* ============================================================================
             * File Title
             ============================================================================ */
             .fileContainer > div:nth-of-type(1) > p {
+                color: #FFFFFF;
                 font-size: 10px;
                 font-weight: bold;
                 margin: 2px 0px;
@@ -154,10 +160,17 @@
                     }
                         .svgContainer > div > svg > text > tspan {
                             /* display: block; */
+                            /* color: #FFFFFF; */
+                            fill: #FFFFFF;
                         }
+                        /* .svgContainer > div > svg > text > tspan td {
+
+                        } */
                     .sliderRect {
-                        fill: #F00;
-                        opacity: 0.1;
+                        /* fill: #F00; */
+                        fill: #0091ea;
+                        /* opacity: 0.1; */
+                        opacity: 0.3;
                         cursor: pointer;
                     }
 
@@ -165,7 +178,8 @@
     * Scroll Container (display view)
     ============================================================================ */
     #scrollContainer {
-        background-color: #FFFFFF;
+        /* background-color: #FFFFFF; */
+        background-color: #222222;
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         height: 512px;
         overflow-y: scroll;
@@ -173,6 +187,9 @@
         #scrollContainer table {
             border-collapse: collapse;
         }
+            #scrollContainer table tr td {
+                color: #FFFFFF;
+            }
             .coverableTr {
                 background-color: rgb(124, 199, 124);
             }

@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import FileNameParser from '../../util/file-name-parser';
 import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
+import Suspiciousness from '../../models/Suspiciousness';
 
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -250,14 +251,17 @@ class Tarantula extends Component {
         })).then((response) => {
             console.log('Callback:\n' + JSON.stringify(response));
 
+            let susp = new Suspiciousness(response);
+            console.log("Suspiciousness:\n" + JSON.stringify(susp.suspiciousness()));
+
             for (let i = 0; i < response.length; i++) {
                 console.log("Response #" + i + ":\n" + JSON.stringify(response[i]));
 
-                // TODO: Call suspiciousness module and save state before displaying coverage
-                // - code goes here -
+            //     // TODO: Call suspiciousness module and save state before displaying coverage
+            //     // - code goes here -
 
-                // Save state of suspiciousness score
-                // don't worry bout this one
+            //     // Save state of suspiciousness score
+            //     // don't worry bout this one
 
                 // Display the covreage on minimap
                 this.displayCoverageOnMinimap(response[i], activatedTestCases[i]);
@@ -1035,9 +1039,9 @@ class Tarantula extends Component {
         // Change background color of file container
         let fileContainers = document.getElementsByClassName('fileContainer');
         for (let i = 0; i < fileContainers.length; i++) {
-            fileContainers[i].style.backgroundColor = "#FFFFFF";
+            fileContainers[i].style.backgroundColor = "#222222";
         }
-        fileContainers[index].style.backgroundColor = "#E9E9E9";
+        fileContainers[index].style.backgroundColor = "#363636";
 
         // Generate display
         this.generateDisplay(index);

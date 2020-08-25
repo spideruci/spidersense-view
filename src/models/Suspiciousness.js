@@ -1,4 +1,4 @@
-class Tarantula{
+class Suspiciousness{
     constructor(input){
         this.sampleInput = input;
         this.totalnumberofFail = 0;
@@ -168,9 +168,10 @@ class Tarantula{
     //l value has to be max of %fail/pass
     //calculating the suspiciousness and hsl values
 }
-module.exports = {
-    tarantula:Tarantula
-}
+export default Suspiciousness;
+// module.exports = {
+//     tarantula:Tarantula
+// }
 // obj1 = new Tarantula(sampleInput)
 // let output = obj1.suspiciousness()
 // console.log(output)

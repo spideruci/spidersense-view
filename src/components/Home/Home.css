@@ -67,8 +67,10 @@
     .moduleWrapper {
         display: flex;
         flex-direction: row;
-        justify-content: space-evenly;
+        /* justify-content: space-evenly; */
         flex-wrap: wrap;
+        /* flex-wrap: wrap; */
+        /* border: 1px dashed; */
         /* border: 1px dashed; */
     }
     .projectUnitModule {
@@ -85,8 +87,20 @@
     }
         .projectUnitModule > div:nth-of-type(1) {
             flex-grow: 1;
-            background-color: #444444;
+            /* background-color: #444444; */
         }
+
+        /* .projectUnitModule:nth-of-type(1) > div:nth-of-type(1) {
+            background-color: #29b6f6;
+        }
+        .projectUnitModule:nth-of-type(2) > div:nth-of-type(1) {
+            background-color: #66bb6a;
+        }
+        .projectUnitModule:nth-of-type(3) > div:nth-of-type(1) {
+            background-color: #ef5350;
+        } */
+
+
         .projectUnitModule > div:nth-of-type(2) {
             display: flex;
             flex-direction: column;

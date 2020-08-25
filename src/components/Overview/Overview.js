@@ -66,7 +66,6 @@ class Overview extends Component {
                                 <p className="materialCardDescription">Number of Commits</p>
                             </div>
                             <div>
-                                {/* <img className="materialCardIcon" /> */}
                                 <HistoryIcon />
                             </div>
                         </div>
