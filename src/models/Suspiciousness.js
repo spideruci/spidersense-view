@@ -66,12 +66,12 @@ class Suspiciousness{
     //hue1: the hue value of the color you want to get when the percentage is 1, taken to be 120(green)
     percentageToHsl(percentage,i) {
         var hue = (percentage * (120-0)) + 0
-        return 'hsl(' + hue + ', 100%, '+ Math.max((this.faillineMap[i]/this.totalnumberofFail),(this.passlineMap[i]/this.totalnumberofPass))*100+'%';
+        return 'hsl(' + hue + ', 100%, '+ Math.max((this.faillineMap[i]/this.totalnumberofFail),(this.passlineMap[i]/this.totalnumberofPass))*100+'%)';
     }
     //default value function when there are no failing cases
     no_fail_percentageToHsl(percentage) {
         var hue = (percentage * (120-0)) + 0
-        return 'hsl(' + hue + ', 100%, 50%'
+        return 'hsl(' + hue + ', 100%, 50%)'
     }
     roundToTwo(num) {    
         return +(Math.round(num + "e+2")  + "e-2")
