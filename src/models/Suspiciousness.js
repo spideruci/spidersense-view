@@ -25,7 +25,7 @@ class Suspiciousness{
                 for(let j in arr)
                 {
                     // console.log(j,arr[j]["line"].linenumber);
-                    let cur_line = arr[j]["line"].linenumber;
+                    let cur_line = arr[j]["line"].lineNumber;
                     //populating source map for output population
                     this.sourcetolinemap[s_name].add(cur_line)
                     
@@ -88,7 +88,7 @@ class Suspiciousness{
     {
         for(let i in this.passlineMap)
         {
-            // var suspiciousness_value = 0;
+            var suspiciousness_value = 0;
             //checking if line is hit by both pass and fail test_cases
             if(i in this.faillineMap)
             {
@@ -157,11 +157,14 @@ class Suspiciousness{
     suspiciousness(){
         this.map_populating()
         console.log(this.totalnumberofPass,this.totalnumberofFail,'pass1')
-        this.populating_with_pass_cases()
-        console.log('pass2')
-        this.populating_with_fail_cases()
-        console.log('pass3')
-        let output = this.populating_final_response()
+        if(this.totalnumberofFail==0){
+            this.populating_with_pass_cases()
+        }
+        else{
+            this.populating_with_pass_cases()
+            this.populating_with_fail_cases()
+        }
+                let output = this.populating_final_response()
         return output
     
     }
