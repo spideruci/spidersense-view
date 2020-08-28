@@ -51,7 +51,7 @@ class Suspiciousness{
                 for(let j in arr)
                 {
                     // console.log(j,arr[j]["line"].linenumber);
-                    let cur_line = arr[j]["line"].linenumber;
+                    let cur_line = arr[j]["line"].lineNumber;
                     let s_name = arr[j]["line"].sourceName;
                     if(s_name in this.sourcetolinemap){
                         this.sourcetolinemap[s_name].add(cur_line)
@@ -187,7 +187,310 @@ class Suspiciousness{
     //l value has to be max of %fail/pass
     //calculating the suspiciousness and hsl values
 }
-
+const sampleInput = [
+    {
+      "testcases": [
+        {
+          "signature": "[test:expectThereToBeNoFailingTestsInData_When_ZeroTestsAndStmts(org.spideruci.tarantula.TestDataBuilder)]",
+          "sourceName": "[runner:org.spideruci.tarantula.TestDataBuilder]",
+          "passed": 1,
+          "coverage": [
+            {
+              "line": {
+                "lineId": "71555",
+                "lineNumber": 8,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71556",
+                "lineNumber": 10,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71557",
+                "lineNumber": 11,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71558",
+                "lineNumber": 13,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71559",
+                "lineNumber": 14,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71560",
+                "lineNumber": 16,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71561",
+                "lineNumber": 17,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71562",
+                "lineNumber": 19,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71563",
+                "lineNumber": 23,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71564",
+                "lineNumber": 24,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71566",
+                "lineNumber": 28,
+                "sourceName": "org.spideruci.tarantula.TarantulaDataBuilder.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71660",
+                "lineNumber": 147,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71661",
+                "lineNumber": 148,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71662",
+                "lineNumber": 150,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71663",
+                "lineNumber": 151,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71664",
+                "lineNumber": 154,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71665",
+                "lineNumber": 155,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71667",
+                "lineNumber": 159,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71670",
+                "lineNumber": 166,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71671",
+                "lineNumber": 167,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71672",
+                "lineNumber": 170,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71673",
+                "lineNumber": 171,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            },
+            {
+              "line": {
+                "lineId": "71686",
+                "lineNumber": 208,
+                "sourceName": "org.spideruci.tarantula.TarantulaData.java"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+        "testcases": [
+          {
+            "signature": "[test:expect_AllPassOnStmts_Equals_TestCount_When_AllPassingTests_AllTestsLiveGood_AllStmtsCovered(org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt)]",
+            "sourceName": "[runner:org.spideruci.tarantula.TestCalculatePassOnStmtAndFailOnStmt]",
+            "passed": 0,
+            "coverage": [
+              {
+                "line": {
+                  "lineId": "71567",
+                  "lineNumber": 3,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71612",
+                  "lineNumber": 92,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71613",
+                  "lineNumber": 93,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71614",
+                  "lineNumber": 96,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71615",
+                  "lineNumber": 97,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71616",
+                  "lineNumber": 98,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71617",
+                  "lineNumber": 99,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71618",
+                  "lineNumber": 100,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71619",
+                  "lineNumber": 101,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71620",
+                  "lineNumber": 102,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71622",
+                  "lineNumber": 105,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71623",
+                  "lineNumber": 109,
+                  "sourceName": "org.spideruci.tarantula.TarantulaFaultLocalizer.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71652",
+                  "lineNumber": 8,
+                  "sourceName": "org.spideruci.tarantula.PassFailPair.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71653",
+                  "lineNumber": 9,
+                  "sourceName": "org.spideruci.tarantula.PassFailPair.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71654",
+                  "lineNumber": 10,
+                  "sourceName": "org.spideruci.tarantula.PassFailPair.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71655",
+                  "lineNumber": 11,
+                  "sourceName": "org.spideruci.tarantula.PassFailPair.java"
+                }
+              },
+              {
+                "line": {
+                  "lineId": "71657",
+                  "lineNumber": 18,
+                  "sourceName": "org.spideruci.tarantula.PassFailPair.java"
+                }
+              }
+            ]
+          }
+        ]
+      }
+  ]
 export default Suspiciousness;
 // module.exports = {
 //     tarantula:Tarantula
