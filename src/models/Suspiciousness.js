@@ -14,11 +14,11 @@ class Suspiciousness{
         for(const i in this.sampleInput)
         {
             let arr = this.sampleInput[i].testcases[0].coverage
-            let s_name = this.sampleInput[i].testcases[0].sourceName 
-            if(s_name in this.sourcetolinemap){}
-            else{
-                this.sourcetolinemap[s_name] = new Set()
-            }
+            // let s_name = this.sampleInput[i].testcases[0].sourceName 
+            // if(s_name in this.sourcetolinemap){}
+            // else{
+            //     this.sourcetolinemap[s_name] = new Set()
+            // }
             if(this.sampleInput[i].testcases[0].passed==true)
             {
                 this.totalnumberofPass++;
@@ -26,9 +26,16 @@ class Suspiciousness{
                 {
                     // console.log(j,arr[j]["line"].linenumber);
                     let cur_line = arr[j]["line"].lineNumber;
-                    //populating source map for output population
-                    this.sourcetolinemap[s_name].add(cur_line)
-                    
+                    let s_name = arr[j]["line"].sourceName;
+            		if(s_name in this.sourcetolinemap)
+            		{
+                        this.sourcetolinemap[s_name].add(cur_line)
+                    }
+                    else
+                    {
+                        this.sourcetolinemap[s_name] = new Set()
+                        this.sourcetolinemap[s_name].add(cur_line)
+                    }
                     if(cur_line in this.passlineMap){
                         this.passlineMap[cur_line]++;
                     }
@@ -45,8 +52,17 @@ class Suspiciousness{
                 {
                     // console.log(j,arr[j]["line"].linenumber);
                     let cur_line = arr[j]["line"].linenumber;
+                    let s_name = arr[j]["line"].sourceName;
+                    if(s_name in this.sourcetolinemap){
+                        this.sourcetolinemap[s_name].add(cur_line)
+                    }
+                    else{
+                        this.sourcetolinemap[s_name] = new Set()
+                        this.sourcetolinemap[s_name].add(cur_line)
+                    }
+                    // console.log(arr[j]["line"].sourceName)
                     //populating source map for output population
-                    this.sourcetolinemap[s_name].add(cur_line)
+                    // this.sourcetolinemap[s_name].add(cur_line)
                     if(cur_line in this.faillineMap)
                     {
                         this.faillineMap[cur_line]++;
@@ -171,10 +187,11 @@ class Suspiciousness{
     //l value has to be max of %fail/pass
     //calculating the suspiciousness and hsl values
 }
+
 export default Suspiciousness;
 // module.exports = {
 //     tarantula:Tarantula
 // }
-// obj1 = new Tarantula(sampleInput)
+// var obj1 = new Suspiciousness(sampleInput)
 // let output = obj1.suspiciousness()
 // console.log(output)
