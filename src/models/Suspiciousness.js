@@ -104,12 +104,12 @@ class Suspiciousness{
     {
         for(let i in this.passlineMap)
         {
-            var suspiciousness_value = 0;
+            let suspiciousness_value = 0;
             //checking if line is hit by both pass and fail test_cases
             if(i in this.faillineMap)
             {
                 // let suspiciousness_value = this.roundToTwo(this.cal_suspiciousness(this.faillineMap,this.passlineMap,this.totalnumberofFail,this.totalnumberofPass,i))
-                var suspiciousness_value= this.roundToTwo(this.cal_suspiciousness(i))
+                suspiciousness_value= this.roundToTwo(this.cal_suspiciousness(i))
                 // console.log(suspiciousness_value)
                 //populating final response with value
                 this.final_respone[i] = 
@@ -134,7 +134,7 @@ class Suspiciousness{
     {
         for(let i in this.faillineMap)
         {
-            var suspiciousness_value = 0;
+            let suspiciousness_value = 1;
             //checking if line is hit by both pass and fail test_cases, since this case is covered before so continuing
             if(i in this.passlineMap){}
             //since there are no pass cases the suspiciousness becomes 1
