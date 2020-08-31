@@ -1,0 +1,103 @@
+/* ============================================================================
+Variables
+============================================================================ */
+$color-background-primary: #f2f2f2;
+$color-background-inverse: #292929;
+$color-text-primary: #484848;
+$color-text-primary-inverse:  #FFFFFF;
+$color-divider: #B2B2B2;
+$about-background-height: 244px;
+
+%material-container {
+    background-color: #FFFFFF;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+%flex-column-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ============================================================================
+Rules
+============================================================================ */
+#about {
+    position: relative;
+    background-color: $color-background-primary;
+    min-height: 100vh;
+
+    .aboutBackground {
+        background-color: $color-background-inverse;
+        width: 100%;
+        height: $about-background-height;
+    }
+    .aboutContent {
+        @extend %flex-column-center;
+        transform: translateY(-($about-background-height / 2) - 48px);
+        z-index: 5;
+    }
+    .title {
+        color: $color-text-primary-inverse;
+        font-weight: bold;
+        font-size: 1.8rem;
+        padding: 12px;
+        margin: 24px 0px;
+        width: 70%;
+    }
+    .welcome {
+        @extend %material-container;
+        color: $color-text-primary;
+        font-size: 0.9rem;
+        width: 70%;
+        margin-bottom: 24px;
+    }
+    .meetTheTeam {
+        @extend %material-container;
+        width: 70%;
+
+        > p:nth-of-type(1) {
+            color: $color-text-primary;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+    }
+    .memberCard {
+        display: flex;
+        flex-direction: row;
+        padding: 12px 0px;
+        margin-bottom: 12px;
+        border-top: 1px solid $color-divider;
+    }
+    .memberPicture {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        padding: 8px;
+
+        > div {
+            width: 100px;
+            height: 100px;
+            background-color: $color-text-primary;
+            border-radius: 50%;
+        }
+    }
+    .memberDetails {
+        flex: 3;
+
+        > p:nth-of-type(1) {
+            font-size: 1.0rem;
+            padding: 8px 0px 6px;
+        }
+
+        > p:nth-of-type(2) {
+            color: $color-text-primary;
+            font-size: 0.8rem;
+            padding: 6px 0px 8px;
+            line-height: 18px;
+        }
+    }
+}

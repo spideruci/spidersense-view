@@ -11,6 +11,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
     /* padding: 0px 12px; */
     margin-bottom: 12px;
 }
@@ -106,6 +107,7 @@
  * Visualization Wrapper (for minimap and display view)
 ============================================================================ */
 #visualizationWrapper {
+    position: relative;
 }
     /* ============================================================================
     * Horizontal Scroll View
@@ -190,13 +192,5 @@
             #scrollContainer table tr td {
                 color: #FFFFFF;
             }
-            .coverableTr {
-                background-color: rgb(124, 199, 124);
-            }
             .coverable {
-                fill: rgb(124, 199, 124);
-                opacity: 0.3;
-            }
-            .nonCoverable {
-                fill: red;
             }

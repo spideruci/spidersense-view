@@ -14,10 +14,16 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Button from '@material-ui/core/Button';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
+import IconButton from '@material-ui/core/IconButton';
+import PageviewIcon from '@material-ui/icons/Pageview';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
 
 import { spidersenseWorkerUrls } from '../../util/vars';
 import "./Tarantula.css";
 import "./MaterialCheckbox.css";
+import "./Tooltip.css";
 
 class Tarantula extends Component {
     commitWrapper = createRef();
@@ -39,8 +45,10 @@ class Tarantula extends Component {
             numberOfSvgs: 0,
             minimapMaxHeights: [],
             scrollContainerHeight: 0,
-            adapters: [],
             testcases: [],
+            suspiciousness: [],
+            isViewScoresDisabled: true,
+            isDialogOpened: true
         };
 
         // Constants
@@ -84,7 +92,7 @@ class Tarantula extends Component {
         this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
 
         this.handleChange = this.handleChange.bind(this);
-        this.onClearButtonClicked = this.onClearButtonClicked.bind(this);
+        this.onDialogClose = this.onDialogClose.bind(this);
     } 
 
     componentDidMount() {
@@ -231,6 +239,17 @@ class Tarantula extends Component {
             .nodes()
             .filter(n => n.checked)
             .map(n => n.getAttribute("key"));
+
+        // Return if there are no activated test cases
+        if (activatedTestCases.length === 0) {
+            this.setState((state) => ({
+                isViewScoresDisabled: true
+            }));
+            return;
+        }
+        this.setState((state) => ({
+            isViewScoresDisabled: false
+        }));
         
         // Map test ids to server url
         let urls = activatedTestCases.map((t) => {
@@ -251,21 +270,22 @@ class Tarantula extends Component {
         })).then((response) => {
             console.log('Callback:\n' + JSON.stringify(response));
 
+            // Get suspiciousness data from Suspiciousness module
             let susp = new Suspiciousness(response);
-            console.log("Suspiciousness:\n" + JSON.stringify(susp.suspiciousness()));
+            let suspiciousnessScores = susp.suspiciousness();
+            console.log("Suspiciousness:\n" + JSON.stringify(suspiciousnessScores));
 
-            for (let i = 0; i < response.length; i++) {
-                console.log("Response #" + i + ":\n" + JSON.stringify(response[i]));
+            // Update state to retain scores
+            this.setState((state) => ({
+                suspiciousness: suspiciousnessScores
+            }));
 
-            //     // TODO: Call suspiciousness module and save state before displaying coverage
-            //     // - code goes here -
+            // Display coverage on minimap
+            this.displayCoverageOnMinimap(suspiciousnessScores);
 
-            //     // Save state of suspiciousness score
-            //     // don't worry bout this one
+            // Display coverage on display view
+            this.displayCoverageOnDisplay(suspiciousnessScores);
 
-                // Display the covreage on minimap
-                this.displayCoverageOnMinimap(response[i], activatedTestCases[i]);
-            }
         }).catch((error) => {
             console.error(error);
         });
@@ -772,77 +792,94 @@ class Tarantula extends Component {
     /**
      * Display coverage for the test case (using testcaseid). Go through each entry in the
      * coverage map, find the file container associated with it, and highlight covered lines.
-     * @param {Object} response   The response object containing coverage data
-     * @param {number} testCaseId The test case id to display coverage for
+     * Suspiciousness score object expected to be:
+     * {
+     *     source: string,
+     *     lines: [{
+     *         suspiciousness: number,
+     *         hsl: string,
+     *         linenumber: number
+     *     }, ...]
+     * }
+     * @param {Object} suspiciousnessScores The suspiciousness object
      */
-    displayCoverageOnMinimap(response, testCaseId) {
+    displayCoverageOnMinimap(suspiciousnessScores) {
         console.log("displayCoverageOnMinimap()");
 
-        // TODO: Change to call suspiciousness module
-        let adapter = new TestcaseCoverageAdapter(testCaseId);
-        adapter.getLineCoverageByFile(response);
+        for (let score of suspiciousnessScores) {
+            // Extract source name
+            let extractedSource = this.parser.extractFileNameByDot(score.source);
 
-        let coverageMap = adapter.getCoverageMap();
-        for (let [key, value] of coverageMap.entries()) {
-            console.log(key + ' = ' + value);
-        }
-
-        // For each entry in the map, get the matching file container index,
-        // and add rects for each line that is covered.
-        for (let [key, value] of coverageMap.entries()) {
+            // Find index of file container
             let fileContainerIndex = this.state.allFiles.findIndex((val) => {
-                return (key === val.name);
+                return (extractedSource === val.name);
             });
 
+            if (fileContainerIndex === -1) {
+                console.error("Unable to find file container index");
+                continue;
+            }
+
+            // Get all svg elements associated with file
             let svgsD3 = d3.selectAll(".fileContainer")
                 .filter(function(d, i) {return i === fileContainerIndex})
                 .selectAll(".svgContainer > div > svg");
-        
-            console.log("src extract name: " + key
-                + "\nfile container index: " + fileContainerIndex
-                + "\nsvgsD3 lengths: " + svgsD3.nodes().length);
-            
-            for (let i = 0; i < value.length; i++) {
-                let svgNumber = Math.floor((value[i] - 1) / this.LINES_PER_SVG);
 
+            console.log("source: " + extractedSource
+                + "\nFile container index: " + fileContainerIndex
+                + "\nNumber of svg nodes: " + svgsD3.nodes().length);
+
+            // Go through each line object
+            for (let l = 0; l < score.lines.length; l++) {
+                let lineObject = score.lines[l];
+
+                // There can be multiple svgs in a file, find right svg for the current linenumber
+                let svgNumber = Math.floor((lineObject.linenumber - 1) / this.LINES_PER_SVG);
+
+                // Create a rect with the appropriate color
                 svgsD3.filter(function(d, f) {return f === svgNumber})
                     .append("rect")
                     .attr("width", this.SVG_WIDTH)
                     .attr("height", this.PIXELS_PER_LINE)
                     .attr("x", 0)
-                    .attr("y", this.PIXELS_PER_LINE * ((value[i] - 1) % this.LINES_PER_SVG ))
+                    .attr("y", this.PIXELS_PER_LINE * ((lineObject.linenumber - 1) % this.LINES_PER_SVG ))
+                    .style("fill", lineObject.hsl)
                     .classed("coverable", true);
             }
         }
-
-        // Update state with adapter and activating test
-        this.setState((state) => ({
-            adapters: state.adapters.concat(adapter),
-        }));
-
-        // Display coverage in scroll container
-        this.displayCoverageOnDisplay();
     }
 
     /**
      * For the currently selected file determined by the selection index, 
-     * display the coverage data by highlighting lines of the activated test.
+     * highlight lines of selected file based on suspiciousness data.
      */
     displayCoverageOnDisplay() {
+        console.log("displayCoverageOnDisplay()");
+
         // Return if no file container was selected or the coverage data hasn't been loaded
         if (this.state.selectionIndex === -1) {
-            return;
-        }
-        if (this.state.adapters == null || this.state.adapters.length === 0) {
+            console.log("No file containers were selected");
             return;
         }
 
-        console.log("displayCoverageOnDisplay()")
-        console.log("Adapters: " + JSON.stringify(this.state.adapters) 
-            + "\nSelection Index: " + this.state.selectionIndex
+        console.log("Selection Index: " + this.state.selectionIndex
             + "\nFiles: " + JSON.stringify(this.state.allFiles));
 
+        // Get name of file for the selected file container
         let fileName = this.state.allFiles[this.state.selectionIndex].name;
+
+        // Retrieve suspiciousness scores from state
+        let suspiciousnessScores = this.state.suspiciousness;
+
+        // Filter appropriate score object using filename
+        let scoresArr = suspiciousnessScores.filter((s) => {
+            return this.parser.extractFileNameByDot(s.source) === fileName;
+        });
+        if (scoresArr.length === 0) {
+            console.error("Unable to find source name");
+            return;
+        }
+        let score = scoresArr[0];
 
         // Obtain list of tr nodes 
         let rows = d3.select("#scrollContainer")
@@ -850,30 +887,33 @@ class Tarantula extends Component {
             .select("tbody")
             .selectAll("tr")
             .nodes();
-
-        let allAdapters = this.state.adapters;
-        for (let a = 0; a < allAdapters.length; a++) {
-            let adapter = allAdapters[a];
-            let coverageMap = adapter.getCoverageMap();
-
-            // Find source in current adapter that has same name as the file name
-            let coveredLines = coverageMap.get(fileName);
-            if (coveredLines === undefined) {
-                console.error("Couldn't retrieve extracted file name from adapter");
-                console.error("filename: " + fileName);
-                return;
-            }
-
-            // Change background color of nodes that are covered
-            // Also add click listeners
-            for (let i = 0; i < coveredLines.length; i++) {
-                rows[coveredLines[i] - 1].classList.add("coverableTr");
-
-                rows[coveredLines[i] - 1].addEventListener("click", () => {
-                    this.onCoverableLineClicked(rows[coveredLines[i] - 1])
-                }, false);
-            }
+        
+        // For each line number in score.lines, change background color of appropriate row
+        for (let i = 0; i < score.lines.length; i++) {
+            let lineObject = score.lines[i];
+            rows[lineObject.linenumber - 1].style.backgroundColor = lineObject.hsl;
+            rows[lineObject.linenumber - 1].classList.add("coverable");
         }
+
+        let tooltipScores = score.lines.map((l) => l.suspiciousness);
+
+        // Add tooltips
+        let tooltipNodes = d3.select("#scrollContainer table tbody")
+            .selectAll("tr.coverable")
+            .selectAll("td:nth-of-type(2)")
+            .classed("tooltip", true)
+            .append("span")
+            .classed("tooltiptext", true);
+
+        let tNodes = tooltipNodes.nodes();
+        for (let i = 0; i < tNodes.length; i++) {
+            let n = tNodes[i];
+            n.innerHTML = `Suspiciousness score: ${tooltipScores[i]}`;
+        }
+        
+        console.log("Number of tds: " + tNodes.length 
+            + "\ntooltipScores: " + tooltipScores
+            + "\nScore.lines: " + JSON.stringify(score.lines));
     }
 
     /** =======================================================================
@@ -890,14 +930,15 @@ class Tarantula extends Component {
         // Reset state
         // NOTE: commits[] is not reset 
         this.setState((state) => ({
+            selectedCommit: '',
             allFiles: [],
             selectionIndex: -1,
             numberOfSvgs: 0,
             minimapMaxHeights: [],
             scrollContainerHeight: 0,
-            adapters: [],
             testcases: [],
-            selectedCommit: ''
+            suspiciousness: [],
+            isViewScoresDisabled: true
         }));
     }
 
@@ -916,14 +957,14 @@ class Tarantula extends Component {
         if (this.state.selectionIndex !== -1) {
             console.log("Removing coverableTr class");
             let trD3 = d3.select("#scrollContainer table tbody")
-                .selectAll("tr.coverableTr")
-                .classed("coverableTr", false);
+                .selectAll("tr.coverable")
+                .style("background-color", null)
+                .classed("coverable", false);
+            
+            trD3.selectAll("td:nth-of-type(2)")
+                .selectAll("span")
+                .remove();
         }
-
-        // Update state to clear adapters
-        this.setState((state) => ({
-            adapters: []
-        }));
     }
 
     /** =======================================================================
@@ -1053,16 +1094,16 @@ class Tarantula extends Component {
         this.displayCoverageOnDisplay();
     }
 
-    onClearButtonClicked() {
+    onClearOrAllButtonClicked(checkAll) {
         console.log("onClearButtonClicked()");
 
         d3.selectAll(".sourceName")
             .select("input")
-            .property("checked", false);
+            .property("checked", checkAll);
 
         d3.selectAll(".testcase")
             .select("input")
-            .property("checked", false);
+            .property("checked", checkAll);
 
         // Request coverage data
         this.requestCoverage();
@@ -1112,13 +1153,15 @@ class Tarantula extends Component {
         this.requestCoverage();
     }
 
-    // TODO: on click of a coverable line
-    onCoverableLineClicked(node) {
-        // let p = document.createElement("p");
-        // let p = (
-        //     <p>Test</p>
-        // );
-        // node.appendChild(p);
+    onViewScoresClicked() {
+        console.log("onViewScoresClicked()");
+    }
+
+    onDialogClose() {
+        console.log("onDialogClose()");
+        this.setState((state) => ({
+            isDialogOpened: false
+        }));
     }
 
     /** =======================================================================
@@ -1132,10 +1175,19 @@ class Tarantula extends Component {
                 <div id="commitContainer">
                     <div id="directoryActions">
                         <ButtonGroup size="small" variant="text" color="primary" aria-label="small text primary button group">
-                            <Button className="directoryButton" onClick={this.onClearButtonClicked}>Clear</Button>
+                            <Button className="directoryButton" onClick={(e) => this.onClearOrAllButtonClicked(false, e)}>Clear</Button>
+                            <Button className="directoryButton" onClick={(e) => this.onClearOrAllButtonClicked(true, e)}>All</Button>
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
                         </ButtonGroup>
+                    </div>
+
+                    <div>
+                        <IconButton aria-label="view scores" color="primary" 
+                            disabled={this.state.isViewScoresDisabled}
+                            onClick={this.onViewScoresClicked}>
+                            <PageviewIcon />
+                        </IconButton>
                     </div>
 
                     <div ref={this.commitWrapper}>
@@ -1180,6 +1232,15 @@ class Tarantula extends Component {
                         <div id="scrollContainer"></div>
                     </div>
                 </div>
+
+                <Dialog onClose={this.onDialogClose} aria-labelledby="simple-dialog-title" open={this.state.isDialogOpened}>
+                    <DialogTitle id="simple-dialog-title">View suspicious statements and scores</DialogTitle>
+                    <DialogContent>
+                        <div>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     }

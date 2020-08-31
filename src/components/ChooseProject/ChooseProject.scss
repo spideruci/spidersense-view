@@ -1,0 +1,82 @@
+/* ============================================================================
+Variables
+============================================================================ */
+$color-background-primary: #f2f2f2;
+$color-background-inverse: #292929;
+$color-text-primary-inverse:  #FFFFFF;
+$color-secondary: #ff1744;
+$color-steps-title: #D91212;
+
+%flex-column-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+%intro-section {
+    width: 70%;
+    padding: 8px;
+}
+
+/* ============================================================================
+Rules
+============================================================================ */
+#chooseProject {
+    background-color: $color-background-primary;
+    min-height: 100vh;
+
+    /* Intro */
+    .introWrapper {
+        @extend %flex-column-center;
+        background-color: $color-background-inverse;
+        padding: 24px;
+        margin-bottom: 24px;
+
+        p, li {
+            color: $color-text-primary-inverse
+        }
+    }
+
+    .title {
+        padding: 12px;
+
+        p {
+            font-weight: bold;
+            font-size: 1.8rem;
+            padding: 12px;
+            border-bottom: 1px solid $color-secondary;
+        }
+    }
+
+    .intro, .introList {
+        @extend %intro-section;
+    }
+    .introList ul {
+        width: 90%;
+        margin-right: 0px;
+        margin-left: auto;
+    }
+    .introList li {
+        margin: 4px 0px;
+    }
+
+    .actionButton {
+        margin: 24px 0px;
+    }
+
+    /* Steps and svgs */
+    .stepsWrapper {
+        @extend %flex-column-center;
+
+        > div {
+            width: 70%;
+        }
+        > div > p {
+            padding: 8px;
+        }
+    }
+    .stepsTitle {
+        color: $color-steps-title;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+}

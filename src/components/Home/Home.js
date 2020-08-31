@@ -5,6 +5,8 @@ import * as d3 from 'd3';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import ViewModuleIcon from '@material-ui/icons/ViewModule';
 import ViewListIcon from '@material-ui/icons/ViewList';
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { spidersenseWorkerUrls } from '../../util/vars';
 import "./Home.css";
@@ -21,7 +23,8 @@ class Home extends React.Component {
         // Initalize state
         this.state = {
             projects: [],
-            currentViewIndex: -1
+            currentViewIndex: -1,
+            backdropOpen: true
         };
 
         // Bind methods
@@ -34,6 +37,11 @@ class Home extends React.Component {
         this.requestAllProjects();
     }
 
+    /** =======================================================================
+     * 
+     * Methods
+     * 
+     ======================================================================= */
     requestAllProjects() {
         console.log("requestAllProjects");
         let url = spidersenseWorkerUrls.getAllProjects;
@@ -135,6 +143,13 @@ class Home extends React.Component {
         window.open(projectLink, '_blank');
     }
 
+    closeBackdrop() {
+        console.log("onBackdropClose()");
+        this.setState((state) => ({
+            backdropOpen: false
+        }));
+    }
+
     /** =======================================================================
      * 
      * RENDER
@@ -154,6 +169,9 @@ class Home extends React.Component {
                 <div id="homeView">
                     {this.populateHomeView()}
                 </div>
+                <Backdrop className="backdrop" open={this.state.backdropOpen}>
+                        <CircularProgress color="inherit" />
+                </Backdrop>
             </div>
          );
      }
