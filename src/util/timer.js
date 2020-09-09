@@ -1,3 +1,8 @@
+/**
+ * Timer
+ * Helper class for benchmarking. Returns the amount of time that has passed in
+ * seconds from startTime to endTime.
+ */
 class Timer {
     constructor() {
         this.startTime = 0;
@@ -14,12 +19,12 @@ class Timer {
 
     getTimeDiff() {
         let timeDiff = this.endTime - this.startTime; //in ms 
-        // strip the ms 
+
+        // Uncomment to strip the ms 
         // timeDiff /= 1000; 
         
-        // get seconds 
+        // Get seconds and return
         let seconds = Math.round(timeDiff);
-        // console.log(seconds + " seconds");
         return seconds;
     }
 

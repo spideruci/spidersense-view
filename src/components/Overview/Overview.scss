@@ -1,0 +1,119 @@
+@import '../../vars/base';
+
+/* ============================================================================
+ * Variables
+ * ========================================================================= */
+
+ /* ============================================================================
+ * Overview Component Rules
+============================================================================ */
+#overview {
+    /* Project info */
+    .projectInfoView {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .projectInfoDetailsContainer {
+        background-color: $background-color-primary-light;
+        box-shadow: $component-shadow;
+        flex-basis: 70%;
+        min-height: 144px;
+        padding: 12px;
+    }
+    .projectInfoDetailsContainer > div:nth-of-type(1) {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 12px;
+
+        > p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        > .navIcon {
+            margin: 0px 24px;
+
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+
+    // Cards on right of details container
+    .projectInfoCardContainer {
+        flex-basis: 25%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .materialCard {
+        background-color: $background-color-primary-light;
+        box-shadow: $component-shadow;
+        width: 100%;
+        min-width: 144px;
+        display: flex;
+        flex-direction: row;
+        padding: 12px;
+
+        > div:nth-of-type(1) {
+            flex: 4;
+        }
+    }
+    .materialCardNumeral {
+        color: $color-text-primary;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    .materialCardDescription {
+        font-size: 0.9rem;
+
+        > div:nth-of-type(2) {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: flex-start;
+        }
+    }
+
+    /* Recent commits */
+    .recentCommitsView {
+        background-color: $background-color-primary-light;
+        box-shadow: $component-shadow;
+        padding: 12px;
+    }
+    .recentCommitsTitle {
+        font-size: 1.2rem;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid $color-divider;
+    }
+    .recentCommitsItem {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0px;
+        border-bottom: 1px solid $color-divider-light;
+    }
+    .recentCommitsMessage {
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .recentCommitsCommitter {
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    .recentCommitsDate {
+        font-size: 0.7rem;
+    }
+    .recentCommitsId {
+        color: $color-text-commits;
+        padding: 0px 24px;
+    }
+}

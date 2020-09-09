@@ -1,3 +1,10 @@
+/**
+ * Given a url from Github, splits off the base url and path following the user
+ * to return the user.
+ * Ex. https://github.com/  |  <github-user>  |  /<project-name>/... 
+ * @param {string} url The Github url
+ * @return {string} The user of the Github repo
+ */
 function getUserFromGithubUrl(url) {
     if (url == null || url.length === 0) {
         return "";

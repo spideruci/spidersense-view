@@ -1,8 +1,9 @@
 import React from 'react';
 
-import {aboutPageDetails} from '../../util/vars';
+import {aboutPageDetails} from '../../vars/vars';
 
 import "./About.scss";
+
 
 class About extends React.Component {
     /** =======================================================================
@@ -13,15 +14,14 @@ class About extends React.Component {
     constructor(props) {
         super(props);
 
+        // Initialize state
         this.state = {
             teamMembers: aboutPageDetails.members
         };
     } 
 
     componentDidMount() {
-
     }
-
 
     /** =======================================================================
      * 
@@ -41,7 +41,7 @@ class About extends React.Component {
                     </div>
 
                     <div className="meetTheTeam">
-                        <p>Meet the Team</p>
+                        <p>{aboutPageDetails.titleMembers}</p>
 
                         <div>
                             {this.state.teamMembers.map((m) => (

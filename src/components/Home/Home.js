@@ -1,5 +1,4 @@
 import React from 'react';
-
 import * as d3 from 'd3';
 
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -8,8 +7,9 @@ import ViewListIcon from '@material-ui/icons/ViewList';
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import { spidersenseWorkerUrls } from '../../util/vars';
-import "./Home.css";
+import { spidersenseWorkerUrls } from '../../vars/vars';
+import "./Home.scss";
+
 
 class Home extends React.Component {
     /** =======================================================================
@@ -19,6 +19,8 @@ class Home extends React.Component {
      ======================================================================= */
     constructor(props) {
         super(props);
+
+        this.viewOptions = [];
 
         // Initalize state
         this.state = {
@@ -39,11 +41,15 @@ class Home extends React.Component {
 
     /** =======================================================================
      * 
-     * Methods
+     * METHODS
      * 
      ======================================================================= */
+
+    /**
+     * Request from spidersense-worker all available projects. On response, 
+     * update state to retain projects and initialize view options.
+     */
     requestAllProjects() {
-        console.log("requestAllProjects");
         let url = spidersenseWorkerUrls.getAllProjects;
 
         fetch(url, {
@@ -59,14 +65,21 @@ class Home extends React.Component {
             }))
 
             this.initializeViewOptions();
+            this.closeBackdrop();
         }).catch((error) => {
             console.error(error);
+            this.closeBackdrop();
         });
     }
 
+    /**
+     * Initialize view options: module view or list view. 
+     * Module view:     displays projects in a card with a background color
+     * List view:       displays projects in a list
+     * 
+     * Set current view index to the module view.
+     */
     initializeViewOptions() {
-        console.log("initializeViewOptions()");
-
         this.viewOptions = [
             {
                 viewName: "module",
@@ -97,54 +110,71 @@ class Home extends React.Component {
             }
         ];
 
+        // Update state to set currentViewIndex to module
         this.setState((state) => ({
             currentViewIndex: 0
         }));
     }
 
-    updateCurrentViewOption(index) {
-        console.log("updateCurrentViewOption() - " + index);
-        this.setState((state) => ({
-            currentViewIndex: index
-        }));
-    }
-
+    /**
+     * Return the HTML for the current view option. The HTML is contained in the
+     * view option's container property.
+     * @return {HTML} The DOM elements of the current view option
+     */
     populateHomeView() {
-        console.log("populateHomeView() - " + this.state.currentViewIndex);
         if (this.viewOptions == null || this.viewOptions == undefined || this.viewOptions.length == 0) {
             return;
         }
 
+        // If current view index is module, add moduleWrapper class
         if (this.state.currentViewIndex === 0) {
-            d3.select("#homeView")
+            d3.select(".homeView")
                 .classed("moduleWrapper", true);
         } else {
-            d3.select("#homeView")
+            d3.select(".homeView")
                 .classed("moduleWrapper", false);
         }
 
         return this.viewOptions[this.state.currentViewIndex].container;
     }
 
-    onProjectClicked(projectId) {
-        console.log("onProjectClicked() - " + projectId);
+    /** =======================================================================
+     * 
+     * METHODS - Event Handling
+     * 
+     ======================================================================= */
 
-        // Get cookie
+    /**
+     * Update the state to set currentViewIndex to the selected index
+     * @param {number} index The selected view index
+     */
+    updateCurrentViewOption(index) {
+        this.setState((state) => ({
+            currentViewIndex: index
+        }));
+    }
+
+    /**
+     * On click of a project, update cookie's id to the selected project id
+     * and navigate to Project component with parameter projectId.
+     * @param {number} projectId The id of the selected project
+     */
+    onProjectClicked(projectId) {
         const { cookies } = this.props;
-        // Set a cookie key id to the project id
         cookies.set('id', projectId, { path: '/' });
 
         this.props.history.push(`/project/${projectId}`);
     }
 
+    /**
+     * On click of the Github icon, open a new tab to that Github link
+     * @param {string} projectLink The url to the Github repo
+     */
     openGithubLink(projectLink) {
-        console.log("openGithubLink() - " + projectLink);
-
         window.open(projectLink, '_blank');
     }
 
     closeBackdrop() {
-        console.log("onBackdropClose()");
         this.setState((state) => ({
             backdropOpen: false
         }));
@@ -158,7 +188,7 @@ class Home extends React.Component {
      render() {
          return (
             <div id="home">
-                <div id="projectHeader">
+                <div className="projectHeader">
                     <div>
                         <ViewModuleIcon onClick={(e) => this.updateCurrentViewOption(0, e)}/>
                     </div>
@@ -166,9 +196,10 @@ class Home extends React.Component {
                         <ViewListIcon onClick={(e) => this.updateCurrentViewOption(1, e)}/>
                     </div>
                 </div>
-                <div id="homeView">
+                <div className="homeView">
                     {this.populateHomeView()}
                 </div>
+
                 <Backdrop className="backdrop" open={this.state.backdropOpen}>
                         <CircularProgress color="inherit" />
                 </Backdrop>

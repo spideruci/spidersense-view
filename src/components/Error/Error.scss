@@ -1,0 +1,38 @@
+@import "../../vars/base";
+
+ /* ============================================================================
+ * Error Component Rules
+ * ========================================================================= */
+#error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+
+    > div {
+        flex-basis: 50%;
+        margin: 0px auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .badgeContainer {
+        width: 144px;
+    }
+    .badgeContainer img {
+        display: block;
+        width: 100%;
+    }
+    .error404 {
+        color: $color-text-links;
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin: 24px 0px 8px;
+    }
+    .errorDescription {
+        font-size: 1.1rem;
+        margin: 8px 0px 24px;
+    }
+}

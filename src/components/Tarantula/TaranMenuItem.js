@@ -1,5 +1,5 @@
 /**
- * Shorted the commitId if its length is more than 6 characters.
+ * Shortens the commitId if its length is more than 6 characters.
  * 6 is the # of characters a commit id on Github is usually shortened to.
  * @param   {string}    commitId        The commit id
  */

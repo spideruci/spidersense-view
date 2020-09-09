@@ -1,15 +1,12 @@
 import React, { Component, createRef } from 'react';
 
 import * as d3 from 'd3';
-import FileNameParser from '../../util/file-name-parser';
-import TestcaseCoverageAdapter from '../../network/testcase-coverage-adapter';
+import {extractFileName, extractFileNameByDot} from '../../util/file-name-parser';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
 import Suspiciousness from '../../models/Suspiciousness';
 
-import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-// import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Button from '@material-ui/core/Button';
@@ -20,8 +17,8 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 
-import { spidersenseWorkerUrls } from '../../util/vars';
-import "./Tarantula.css";
+import { spidersenseWorkerUrls } from '../../vars/vars';
+import "./Tarantula.scss";
 import "./MaterialCheckbox.css";
 import "./Tooltip.css";
 
@@ -48,7 +45,11 @@ class Tarantula extends Component {
             testcases: [],
             suspiciousness: [],
             isViewScoresDisabled: true,
-            isDialogOpened: true
+
+            isDialogOpened: false,
+            isSuspDialogOpened: false,
+
+            coverableIndex: -1
         };
 
         // Constants
@@ -66,19 +67,6 @@ class Tarantula extends Component {
         // this.DIRECTORY_HEIGHT = this.SVG_MAX_HEIGHT + 16 + 12 + 14 + SCROLL_CONTAINER_HEIGHT;
         this.DIRECTORY_HEIGHT = 864;
 
-        // Variables
-        this.parser = new FileNameParser();
-        // this.useStylesClasses = makeStyles((theme) => ({
-        //     formControl: {
-        //       margin: theme.spacing(1),
-        //       minWidth: 244,
-        //       width: 400
-        //     },
-        //     selectEmpty: {
-        //       marginTop: theme.spacing(2),
-        //     },
-        // }));
-
         // Bind methods
         this.generateDirectoryView = this.generateDirectoryView.bind(this);
         this.onSourceNameChecked = this.onSourceNameChecked.bind(this);
@@ -92,10 +80,18 @@ class Tarantula extends Component {
         this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
 
         this.handleChange = this.handleChange.bind(this);
+        this.onViewScoresClicked = this.onViewScoresClicked.bind(this);
         this.onDialogClose = this.onDialogClose.bind(this);
+
+        this.generateViewDialog = this.generateViewDialog.bind(this);
+        this.generateSuspDialog = this.generateSuspDialog.bind(this);
     } 
 
     componentDidMount() {
+    }
+
+    componentDidUpdate() {
+        console.log("componentDidUpdate()");
     }
 
     /** =======================================================================
@@ -145,7 +141,7 @@ class Tarantula extends Component {
 
         // Get names of source links and links in different arrays
         let names = sourceLinks.map((u) => {
-            return this.parser.extractFileName(u);
+            return extractFileName(u);
         });
         let urls = sourceLinks;
 
@@ -233,6 +229,8 @@ class Tarantula extends Component {
 
         this.removeExistingCoverage();
 
+        this.setViewScoresDisabled();
+
         // Get the test ids of the activated (checked) tests 
         let activatedTestCases = d3.selectAll(".testcase")
             .select("input")
@@ -242,14 +240,8 @@ class Tarantula extends Component {
 
         // Return if there are no activated test cases
         if (activatedTestCases.length === 0) {
-            this.setState((state) => ({
-                isViewScoresDisabled: true
-            }));
             return;
         }
-        this.setState((state) => ({
-            isViewScoresDisabled: false
-        }));
         
         // Map test ids to server url
         let urls = activatedTestCases.map((t) => {
@@ -808,7 +800,7 @@ class Tarantula extends Component {
 
         for (let score of suspiciousnessScores) {
             // Extract source name
-            let extractedSource = this.parser.extractFileNameByDot(score.source);
+            let extractedSource = extractFileNameByDot(score.source);
 
             // Find index of file container
             let fileContainerIndex = this.state.allFiles.findIndex((val) => {
@@ -873,7 +865,7 @@ class Tarantula extends Component {
 
         // Filter appropriate score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
-            return this.parser.extractFileNameByDot(s.source) === fileName;
+            return extractFileNameByDot(s.source) === fileName;
         });
         if (scoresArr.length === 0) {
             console.error("Unable to find source name");
@@ -895,25 +887,222 @@ class Tarantula extends Component {
             rows[lineObject.linenumber - 1].classList.add("coverable");
         }
 
-        let tooltipScores = score.lines.map((l) => l.suspiciousness);
-
-        // Add tooltips
-        let tooltipNodes = d3.select("#scrollContainer table tbody")
+        d3.select("#scrollContainer table tbody")
             .selectAll("tr.coverable")
-            .selectAll("td:nth-of-type(2)")
-            .classed("tooltip", true)
-            .append("span")
-            .classed("tooltiptext", true);
+            .on('click', (d, i) => {
+                this.onCoverableLineClicked(i);
+            });
+    }
 
-        let tNodes = tooltipNodes.nodes();
-        for (let i = 0; i < tNodes.length; i++) {
-            let n = tNodes[i];
-            n.innerHTML = `Suspiciousness score: ${tooltipScores[i]}`;
+    setViewScoresDisabled() {
+        // Get the test ids of the activated (checked) tests 
+        let activatedTestCases = d3.selectAll(".testcase")
+            .select("input")
+            .nodes()
+            .filter(n => n.checked)
+            .map(n => n.getAttribute("key"));
+
+        // Update state to enable or disable viewScores button
+        let enabled = (activatedTestCases.length > 0) && this.state.selectionIndex != -1;
+        this.setState((state) => ({
+            isViewScoresDisabled: !enabled
+        }));
+    }
+
+    generateViewDialog() {
+        console.log("generateViewDialog()");
+        // Return if no file containers were selected
+        if (!this.state.isDialogOpened || this.state.selectionIndex === -1) {
+            return;
         }
-        
-        console.log("Number of tds: " + tNodes.length 
-            + "\ntooltipScores: " + tooltipScores
-            + "\nScore.lines: " + JSON.stringify(score.lines));
+
+        // Remove any previous dialog content
+        d3.select("#dialogScoresContainer").selectAll("*").remove();
+
+        // Grab contents, file name for selected file container, and suspiciousness scores
+        // from state
+        let obj = this.state.allFiles[this.state.selectionIndex];
+        let content = obj.contents;
+        let fileName = this.state.allFiles[this.state.selectionIndex].name;
+        let suspiciousnessScores = this.state.suspiciousness;
+
+        // Filter score object using filename
+        let scoresArr = suspiciousnessScores.filter((s) => {
+            return extractFileNameByDot(s.source) === fileName;
+        });
+
+        // Start with the dialog title
+        d3.select("#viewDialogTitle")
+            .text(`Suspiciousness scores for ${obj.name}`);
+
+        // The hdeaders for table
+        let tbody = d3.select("#dialogScoresContainer")
+            .append("table")
+            .append("tbody");
+        let headerTr = tbody.append("tr")
+            .classed("dialogTrHeader", true);
+        headerTr.append("th")
+            .text("Line");
+        headerTr.append("th")
+            .text("Hue");
+        headerTr.append("th")
+            .text("Score");
+        headerTr.append("th")
+            .text("Statement");
+
+        // Then content for each row
+        let trs = tbody.selectAll("tr:not(.dialogTrHeader)")
+            .data(content)
+            .enter()
+            .append("tr");
+        trs.append("td")
+            .text(function(d, i) {
+                return i + 1;
+            });
+
+        if (scoresArr.length === 0) {
+            trs.append("td");
+            trs.append("td");
+        } else {
+            let score = scoresArr[0];
+
+            let scoreFound = function(index) {
+                let scoreArr = score.lines.filter(li => li.linenumber === (index + 1));
+                if (scoreArr.length !== 1) {
+                    return "";
+                }
+                let s = scoreArr[0];
+                return s.suspiciousness;
+            };
+            let hueFound = function(index) {
+                let scoreArr = score.lines.filter(li => li.linenumber === (index + 1));
+                if (scoreArr.length !== 1) {
+                    return "none";
+                }
+                let s = scoreArr[0];
+                return s.hsl;
+            }
+
+            trs.append("td")
+                .append("div")
+                .style("background-color", function(d, i) {
+                    return hueFound(i);
+                });
+            trs.append("td")
+                .text(function(d, i) {
+                    return scoreFound(i);
+                });
+        }
+
+        trs.append("td")
+            .text(function(d, i) {
+                return d;
+            });
+    }
+
+    generateSuspDialog() {
+        console.log("generateSuspDialog()");
+        // Return if no file containers were selected
+        if (!this.state.isSuspDialogOpened || this.state.selectionIndex === -1 
+            || this.state.coverableIndex === -1) {
+            return;
+        }
+
+        console.log("Coverable index: " + this.state.coverableIndex);
+        let coverableIndex = this.state.coverableIndex;
+
+        // Grab contents, file name for selected file container, and suspiciousness scores
+        // from state
+        let obj = this.state.allFiles[this.state.selectionIndex];
+        let content = obj.contents;
+        let fileName = this.state.allFiles[this.state.selectionIndex].name;
+        let suspiciousnessScores = this.state.suspiciousness;
+
+        // Filter appropriate score object using filename
+        let scoresArr = suspiciousnessScores.filter((s) => {
+            return extractFileNameByDot(s.source) === fileName;
+        });
+        if (scoresArr.length === 0) {
+            return <p>An error occurred</p>;
+        }
+        let score = scoresArr[0];
+        let lineObj = score.lines[coverableIndex];
+
+        // Get data for detailsArr
+        // Get the test ids of the activated (checked) tests 
+        let activatedTestCases = d3.selectAll(".testcase")
+            .select("input")
+            .nodes()
+            .filter(n => n.checked)
+            .map(n => n.getAttribute("key"));
+
+        let detailsArr = [
+            {
+                title: "File:",
+                value: fileName
+            },
+            {
+                title: "Activated Test Cases:",
+                value: activatedTestCases.length
+            },
+            {
+                title: "Passed:",
+                value: 0
+            },
+            {
+                title: "Total Passed:",
+                value: 0
+            },
+            {
+                title: "Failed:",
+                value: 0
+            },
+            {
+                title: "Total Failed:",
+                value: 0
+            }
+        ];
+
+        let containers = d3.select("#dialogSuspContainer")
+            .selectAll("div")
+            .data(detailsArr)
+            .enter()
+            .append("div");
+        containers.append("p")
+            .text(function(d, i) {
+                return d.title;
+            });
+        containers.append("p")
+            .text(function(d, i) {
+                return d.value;
+            });
+
+        // Table (1 line/statement)
+        let tbody = d3.select("#dialogSuspContainer")
+            .append("table")
+            .append("tbody");
+        let trHeader = tbody.append("tr")
+            .classed("dialogTrHeader", true);
+        trHeader.append("th")
+            .text("Line");
+        trHeader.append("th")
+            .text("Hue");
+        trHeader.append("th")
+            .text("Score");
+        trHeader.append("th")
+            .text("Statement");
+
+        // The content for the selected row
+        let trLine = tbody.append("tr");
+        trLine.append("td")
+            .text(lineObj.linenumber);
+        trLine.append("td")
+            .append("div")
+            .style("background-color", lineObj.hsl);
+        trLine.append("td")
+            .text(lineObj.suspiciousness);
+        trLine.append("td")
+            .text(content[lineObj.linenumber - 1]);
     }
 
     /** =======================================================================
@@ -938,7 +1127,8 @@ class Tarantula extends Component {
             scrollContainerHeight: 0,
             testcases: [],
             suspiciousness: [],
-            isViewScoresDisabled: true
+            isViewScoresDisabled: true,
+            coverableIndex: -1
         }));
     }
 
@@ -1078,11 +1268,11 @@ class Tarantula extends Component {
         }));
 
         // Change background color of file container
-        let fileContainers = document.getElementsByClassName('fileContainer');
-        for (let i = 0; i < fileContainers.length; i++) {
-            fileContainers[i].style.backgroundColor = "#222222";
-        }
-        fileContainers[index].style.backgroundColor = "#363636";
+        let fileContainers = d3.selectAll(".fileContainer")
+            .classed("fileContainerSelected", false);
+        fileContainers.filter(function(d, i) {
+                return i === index;
+            }).classed("fileContainerSelected", true);
 
         // Generate display
         this.generateDisplay(index);
@@ -1092,6 +1282,9 @@ class Tarantula extends Component {
 
         // Display coverage on display container if it is available
         this.displayCoverageOnDisplay();
+
+        // Enable or disable viewScores button
+        this.setViewScoresDisabled();
     }
 
     onClearOrAllButtonClicked(checkAll) {
@@ -1155,13 +1348,44 @@ class Tarantula extends Component {
 
     onViewScoresClicked() {
         console.log("onViewScoresClicked()");
+        if (!this.state.isDialogOpened) {
+            this.setState((state) => ({
+                isDialogOpened: true
+            }));
+        }
     }
 
-    onDialogClose() {
+    onCoverableLineClicked(coverableIndex) {
+        console.log("onCoverableLineClicked(): - " 
+            + "\nindex: " + coverableIndex);
+        
+        if (!this.state.isSuspDialogOpened) {
+            this.setState((state) => ({
+                isSuspDialogOpened: true,
+                coverableIndex: coverableIndex
+            }));
+        }
+    }
+
+    onDialogClose(dlg) {
         console.log("onDialogClose()");
-        this.setState((state) => ({
-            isDialogOpened: false
-        }));
+
+        switch(dlg) {
+            case "view": {
+                console.log("Dialog for view closed");
+                this.setState((state) => ({
+                    isDialogOpened: false
+                }));
+                break;
+            }
+            case "susp": {
+                console.log("Dialog for susp closed");
+                this.setState((state) => ({
+                    isSuspDialogOpened: false
+                }));
+                break;
+            }
+        }
     }
 
     /** =======================================================================
@@ -1191,9 +1415,7 @@ class Tarantula extends Component {
                     </div>
 
                     <div ref={this.commitWrapper}>
-                        <FormControl 
-                            // className={this.useStylesClasses.formControl}
-                            >
+                        <FormControl >
                             <InputLabel id="simpleSelectLabelCommit">Commit</InputLabel>
                             <Select
                                 labelId="simpleSelectLabelCommit"
@@ -1233,12 +1455,29 @@ class Tarantula extends Component {
                     </div>
                 </div>
 
-                <Dialog onClose={this.onDialogClose} aria-labelledby="simple-dialog-title" open={this.state.isDialogOpened}>
-                    <DialogTitle id="simple-dialog-title">View suspicious statements and scores</DialogTitle>
+                <Dialog 
+                    onEntered={this.generateViewDialog}
+                    onClose={(e) => this.onDialogClose("view", e)} 
+                    aria-labelledby="viewDialogTitle" 
+                    open={this.state.isDialogOpened}
+                    fullWidth={true}
+                    maxWidth="md">
+                    <DialogTitle id="viewDialogTitle"></DialogTitle>
                     <DialogContent>
-                        <div>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                        </div>
+                        <div id="dialogScoresContainer"></div>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog 
+                    onEntered={this.generateSuspDialog}
+                    onClose={(e) => this.onDialogClose("susp", e)}
+                    aria-labelledby="suspDialogTitle" 
+                    open={this.state.isSuspDialogOpened}
+                    fullWidth={true}
+                    maxWidth="sm">
+                    <DialogTitle id="suspDialogTitle">Line Details</DialogTitle>
+                    <DialogContent>
+                        <div id="dialogSuspContainer"></div>
                     </DialogContent>
                 </Dialog>
             </div>

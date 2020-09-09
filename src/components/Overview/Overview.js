@@ -6,7 +6,8 @@ import HistoryIcon from '@material-ui/icons/History';
 import {getUserFromGithubUrl} from '../../util/url-parsers';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from '../Tarantula/TaranMenuItem';
 
-import "./Overview.css";
+import "./Overview.scss";
+
 
 class Overview extends Component {
     /** =======================================================================
@@ -17,11 +18,13 @@ class Overview extends Component {
     constructor(props) {
         super(props);
 
+        // Initialize state
         this.state = {
             project: props.project,
             commits: props.commits
         }
 
+        // Bind methods
         this.openGithubLink = this.openGithubLink.bind(this);
     }
 
@@ -33,12 +36,13 @@ class Overview extends Component {
      * METHODS
      * 
      ======================================================================= */
-    openGithubLink() {
-        console.log("openGithubLink()");
 
+    /**
+     * On click of the Github icon, open a new tab to the Github link of current project
+     */
+    openGithubLink() {
         window.open(this.state.project.projectLink, '_blank');
     }
-
 
     /** =======================================================================
      * 
@@ -47,9 +51,9 @@ class Overview extends Component {
      ======================================================================= */
     render() {
         return (
-            <div className="fileInfoHeader">
-                <div id="projectInfoView">
-                    <div id="projectInfoDetailsContainer">
+            <div id="overview">
+                <div className="projectInfoView">
+                    <div className="projectInfoDetailsContainer">
                         <div>
                             <p>{this.state.project.projectName}</p>
                             <div className="navIcon">
@@ -59,7 +63,7 @@ class Overview extends Component {
                         <p>{getUserFromGithubUrl(this.state.project.projectLink)}</p>
                     </div>
 
-                    <div id="projectInfoCardContainer">
+                    <div className="projectInfoCardContainer">
                         <div className="materialCard">
                             <div>
                                 <p className="materialCardNumeral">{this.state.commits.length}</p>
@@ -71,8 +75,9 @@ class Overview extends Component {
                         </div>
                     </div>
                 </div>
-                <div id="recentCommitsView">
-                    <p id="recentCommitsTitle">Recent Commits</p>
+
+                <div className="recentCommitsView">
+                    <p className="recentCommitsTitle">Recent Commits</p>
                     {
                         this.state.commits.map((c) => (
                             <div className="recentCommitsItem">

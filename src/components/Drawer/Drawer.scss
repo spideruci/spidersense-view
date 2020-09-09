@@ -1,0 +1,76 @@
+@import '../../vars/base';
+
+/* ============================================================================
+ * Variables
+ * ========================================================================= */
+$background-color-drawer: #212121;
+$color-navlink-hover: #424242;
+$drawer-icon-width: 108px;
+
+ /* ============================================================================
+ * Drawer Component Rules
+ * ========================================================================= */
+#drawer {
+    background-color: $background-color-drawer;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    .drawerIcon {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        padding: 24px;
+    }
+    .drawerIcon > div {
+        background-color: $color-text-primary-inverse;
+        width: $drawer-icon-width;
+        height: $drawer-icon-width;
+        border-radius: 50%;
+    }
+    .drawerIcon > div > img {
+        display: block;
+        width: 100%;
+    }
+
+    .drawerTitle {
+        color: $color-text-primary-inverse;
+        text-align: center;
+        padding: 8px
+    }
+
+    .drawerNavigation {
+        margin-top: 24px;
+    }
+
+    .styledNavLink {
+        background-color: $background-color-drawer;
+        text-decoration: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 8px 24px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+
+        &:hover {
+            background-color: $color-navlink-hover;
+            transition: all 0.3s ease;
+        }
+    }
+
+    .navIcon {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+    .navText {
+        color: $color-text-primary-inverse;
+        padding: 0px 8px;
+    }
+
+    .fill {
+        flex-grow: 1;
+    }
+}

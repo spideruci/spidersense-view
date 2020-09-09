@@ -1,6 +1,19 @@
 import React from 'react';
 
+import './Error.scss';
+
 class Error extends React.Component {
+    /** =======================================================================
+     * 
+     * LIFECYCLE
+     * 
+     ======================================================================= */
+     constructor(props) {
+        super(props);
+
+        this.SPIDERSENSE_BADGE_PATH = "/circle_badges/spider_circle_blue.svg";
+    } 
+
     /** =======================================================================
      * 
      * RENDER
@@ -8,9 +21,15 @@ class Error extends React.Component {
      ======================================================================= */
      render() {
          return (
-            <div>
-                <p>The page does not exist</p>
-             </div>
+            <div id="error">
+                <div>
+                    <div className="badgeContainer">
+                        <img src={this.SPIDERSENSE_BADGE_PATH} />
+                    </div>
+                    <p className="error404">404 Error</p>
+                    <p className="errorDescription">The page you are looking for does not exist</p>
+                </div>
+            </div>
          );
      }
 }

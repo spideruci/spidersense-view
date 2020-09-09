@@ -1,0 +1,42 @@
+@import '../../vars/base';
+
+/* ============================================================================
+ * Variables
+ * ========================================================================= */
+
+/* ============================================================================
+ * Project Component Rules
+============================================================================ */
+#project {
+    background-color: $background-color-primary;
+    min-height: 100vh;
+
+    /* Header */
+    .projectHeader {
+        background-color: $background-color-primary-light;
+        box-shadow: $component-shadow;
+        padding: 12px 24px;
+    }
+
+    /* Content */
+    .projectContent {
+        padding: 12px 24px;
+    }
+
+    /* Tabs */
+    .projectTabs {
+        border-bottom: 1px solid $color-divider;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        margin-bottom: 8px;   
+    }
+    
+    .projectTabs > div {
+        padding: 8px 24px;
+
+        &:hover {
+            cursor: pointer;   
+        }
+    }
+}

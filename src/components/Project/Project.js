@@ -5,8 +5,8 @@ import * as d3 from 'd3';
 import Overview from '../Overview/Overview';
 import Tarantula from '../Tarantula/Tarantula';
 
-import { spidersenseWorkerUrls } from '../../util/vars';
-import "./Project.css";
+import {spidersenseWorkerUrls} from '../../vars/vars';
+import "./Project.scss";
 
 
 class Project extends React.Component {
@@ -18,7 +18,7 @@ class Project extends React.Component {
     constructor(props) {
         super(props);
 
-        console.log("Match params id: " + props.match.params.id);
+        this.tabs = [];
 
         // Initialize state
         this.state = {
@@ -37,6 +37,9 @@ class Project extends React.Component {
     } 
 
     componentDidMount() {
+        // console.log("Match params id: " + props.match.params.id);
+
+        // Don't request details if no project id parameter
         if (this.props.match.params == null) {
             return;
         }
@@ -50,8 +53,16 @@ class Project extends React.Component {
      * 
      ======================================================================= */
 
+    /**
+     * Request from spidersense-worker details associated with the given
+     * project id. On response, update state to project object consisting
+     * of:
+     * 1) project id
+     * 2) project name
+     * 3) project link
+     * @param {number} projectId The project id to request details from
+     */
     requestProjectDetails(projectId) {
-        console.log("requestProjectDetails()");
         let url = `${spidersenseWorkerUrls.getProject}/${projectId}`;
 
         fetch(url, {
@@ -81,12 +92,12 @@ class Project extends React.Component {
     }
 
     /**
-     * Request commits from SpiderSense-worker. The data returned is expected to 
-     * be the commit ids (shas). Update the state to retain those commits.
-     * @param   {number}    projectId   The project id
+     * Request from spidersense-worker the commits for the project. The data 
+     * returned is expected to be the commit ids (shas). Pass the list of commits
+     * to the tabs.
+     * @param {number} projectId The project id
      */
     requestCommits(projectId) {
-        console.log("requestCommits()");
         let url = `${spidersenseWorkerUrls.getCommits}/${projectId}`;
 
         fetch(url, {
@@ -103,10 +114,15 @@ class Project extends React.Component {
         });
     }
 
+    /**
+     * Initialize tabs: Overview and Tarantula.
+     * Overview:        Displays details of the project
+     * Tarantula:       Visualizes fault localization of files/statements of the project
+     * 
+     * Set current tab to Overview.
+     * @param {Array} commits The list of commit objects
+     */
     initializeTabs(commits) {
-        console.log("initializeTabs()");
-
-        // Initialize tabs
         this.tabs = [
             {
                 tabName: "Overview",
@@ -118,7 +134,8 @@ class Project extends React.Component {
             }
         ];
 
-        let tabs = d3.select("#projectTabs")
+        // Bind tabs to project tabs DOM nodes
+        let tabs = d3.select(".projectTabs")
             .selectAll("div")
             .data(this.tabs)
             .enter()
@@ -131,26 +148,39 @@ class Project extends React.Component {
                 return t.tabName;
             });
         
-        // Set state so that current tab is the Overview (forces re-render)
+        // Update state to set current tab to Overview (re-renders)
         this.setState((state) => ({
             currentTabIndex: 0
         }));
     }
 
-    updateCurrentTab(index) {
-        console.log("updateCurrentTab(): " + index);
-        this.setState((state) => ({
-            currentTabIndex: index
-        }));
-    }
-
+    /**
+     * Return the HTML for the current tab index. The HTML is contained in the
+     * tab's container property.
+     * @return {HTML} The DOM elements of the current tab
+     */
     populateProjectContainer() {
-        console.log("populateProjectContainer(): " + this.state.currentTabIndex);
         if (this.tabs == null || this.tabs == undefined || this.tabs.length == 0) {
             return;
         }
 
         return this.tabs[this.state.currentTabIndex].container;
+    }
+
+    /** =======================================================================
+     * 
+     * METHODS - Event Handling
+     * 
+     ======================================================================= */
+
+    /**
+     * Update the state to set currentTabIndex to the selected index
+     * @param {number} index The selected tab index
+     */
+    updateCurrentTab(index) {
+        this.setState((state) => ({
+            currentTabIndex: index
+        }));
     }
 
     /** =======================================================================
@@ -161,16 +191,16 @@ class Project extends React.Component {
      render() {
         return (
             <div id="project">
-                <div id="projectHeader">
+                <div className="projectHeader">
                     <div>
                         <p>{this.state.project.projectName}</p>
                     </div>
                 </div>
 
-                <div id="projectContent">
-                    <div id="projectTabs"></div>
+                <div className="projectContent">
+                    <div className="projectTabs"></div>
 
-                    <div id="projectContainer">
+                    <div className="projectContainer">
                         {this.populateProjectContainer()}
                     </div>
                 </div>

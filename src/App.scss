@@ -1,0 +1,24 @@
+/* ============================================================================
+ * Variables
+ * ========================================================================= */
+$drawer-width: 196px;
+$drawer-shadow: 0px 0px 2px 0px #999999;
+
+/* ============================================================================
+ * App Components Rules
+ * ========================================================================= */
+ #app {
+    min-height: 100vh;
+
+    .componentDrawer {
+        width: $drawer-width;
+        box-shadow: $drawer-shadow;
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 10;
+    }
+    .componentContent {
+        margin-left: $drawer-width;
+    }
+}

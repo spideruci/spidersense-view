@@ -1,10 +1,8 @@
+@import '../../vars/base';
+
 /* ============================================================================
-Variables
-============================================================================ */
-$color-background-primary: #f2f2f2;
-$color-background-inverse: #292929;
-$color-text-primary-inverse:  #FFFFFF;
-$color-secondary: #ff1744;
+ * Variables
+ * ========================================================================= */
 $color-steps-title: #D91212;
 
 %flex-column-center {
@@ -18,21 +16,21 @@ $color-steps-title: #D91212;
 }
 
 /* ============================================================================
-Rules
-============================================================================ */
+ * ChooseProject Component Rules
+ * ========================================================================= */
 #chooseProject {
-    background-color: $color-background-primary;
+    background-color: $background-color-primary;
     min-height: 100vh;
 
     /* Intro */
     .introWrapper {
         @extend %flex-column-center;
-        background-color: $color-background-inverse;
+        background-color: $background-color-primary-inverse;
         padding: 24px;
         margin-bottom: 24px;
 
         p, li {
-            color: $color-text-primary-inverse
+            color: $color-text-primary-inverse;
         }
     }
 
@@ -43,7 +41,7 @@ Rules
             font-weight: bold;
             font-size: 1.8rem;
             padding: 12px;
-            border-bottom: 1px solid $color-secondary;
+            border-bottom: 1px solid $color-text-secondary;
         }
     }
 

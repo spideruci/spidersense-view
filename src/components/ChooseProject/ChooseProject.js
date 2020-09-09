@@ -2,7 +2,9 @@ import React from 'react';
 
 import Button from '@material-ui/core/Button';
 
+import {chooseProjectPageDetails} from '../../vars/vars';
 import "./ChooseProject.scss";
+
 
 class ChooseProject extends React.Component {
     /** =======================================================================
@@ -13,6 +15,7 @@ class ChooseProject extends React.Component {
     constructor(props) {
         super(props);
 
+        // Bind methods
         this.onSelectProjectClicked = this.onSelectProjectClicked.bind(this);
     } 
 
@@ -21,6 +24,11 @@ class ChooseProject extends React.Component {
      * Methods
      * 
      ======================================================================= */
+
+     /**
+      * On click of the select project action button, navigate to the
+      * Home component.
+      */
     onSelectProjectClicked() {
         this.props.history.push(`/`);
     }
@@ -35,23 +43,22 @@ class ChooseProject extends React.Component {
             <div id="chooseProject">
                 <div className="introWrapper">
                     <div className="title">
-                        <p>Choose a project</p>
+                        <p>{chooseProjectPageDetails.title}</p>
                     </div>
                     <div className="intro">
-                        <p>Please visit the home page to view and select a project. After selecting one, project analytics will be available, including:</p>
+                        <p>{chooseProjectPageDetails.intro}</p>
                     </div>
                     <div className="introList">
                         <ul>
-                            <li>Project details</li>
-                            <li>Recent commits</li>
-                            <li>List of tests</li>
-                            <li>Fault localization via visual mapping</li>
-                            <li>Computed suspiciousness scores of covered statements</li>
+                        {chooseProjectPageDetails.introList.map((entry) => (
+                                <li>{entry}</li>
+                            ))}
                         </ul>
+
                     </div>
 
                     <div className="actionButton">
-                        <Button className="" variant="outlined" color="secondary" onClick={this.onSelectProjectClicked}>Select Project</Button>
+                        <Button className="" variant="outlined" color="secondary" onClick={this.onSelectProjectClicked}>{chooseProjectPageDetails.actionButtonText}</Button>
                     </div>
                 </div>
 
