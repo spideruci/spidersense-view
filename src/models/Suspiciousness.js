@@ -115,7 +115,9 @@ class Suspiciousness{
                 this.final_respone[i] = 
                 {
                     suspiciousness : suspiciousness_value,
-                    hsl : this.percentageToHsl(1-suspiciousness_value,i)
+                    hsl : this.percentageToHsl(1-suspiciousness_value,i),
+                    passed: this.passlineMap[i],
+                    failed: this.faillineMap[i]
                 }
             }
             //if there are not fail cases then the suspiciousness becomes 0
@@ -125,7 +127,9 @@ class Suspiciousness{
                 this.final_respone[i] = 
                 {
                     suspiciousness : 0,
-                    hsl : this.no_fail_percentageToHsl(1-suspiciousness_value,i)
+                    hsl : this.no_fail_percentageToHsl(1-suspiciousness_value,i),
+                    passed: this.passlineMap[i],
+                    failed: 0
                 }
             }
         }        
@@ -145,7 +149,9 @@ class Suspiciousness{
                 this.final_respone[i] = 
                 {
                     suspiciousness : 1,
-                    hsl : this.no_fail_percentageToHsl(1-suspiciousness_value,i)
+                    hsl : this.no_fail_percentageToHsl(1-suspiciousness_value,i),
+                    passed: 0,
+                    failed: this.faillineMap[i]
                 }
             }
         }
@@ -186,10 +192,11 @@ class Suspiciousness{
     }
     //l value has to be max of %fail/pass
     //calculating the suspiciousness and hsl values
-}export default Suspiciousness;
+}
+export default Suspiciousness;
 // module.exports = {
 //     tarantula:Tarantula
-// }
+// // }
 // var obj1 = new Suspiciousness(sampleInput)
 // let output = obj1.suspiciousness()
 // console.log(output)
