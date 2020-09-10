@@ -1,8 +1,8 @@
-/**
+/** ===========================================================================
  * Timer
  * Helper class for benchmarking. Returns the amount of time that has passed in
  * seconds from startTime to endTime.
- */
+ * ========================================================================= */
 class Timer {
     constructor() {
         this.startTime = 0;

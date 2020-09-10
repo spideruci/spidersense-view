@@ -1,0 +1,36 @@
+@import './base';
+
+/* ============================================================================
+ * Shared Classes
+ * ========================================================================= */
+/* Component Toolbar */
+.toolbar {
+    background-color: $background-color-primary-light;
+    box-shadow: $component-shadow;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+
+    .toolbarTitle p {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .toolbarActions {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .toolbarActions > div {
+        padding: 4px;
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+    .toolbarActions div:nth-of-type(1) {
+        margin-right: 12px;
+    }
+}

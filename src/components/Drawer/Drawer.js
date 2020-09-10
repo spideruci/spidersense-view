@@ -18,7 +18,7 @@ class Drawer extends React.Component {
      constructor(props) {
         super(props);
 
-        this.SPIDERSENSE_BADGE_PATH = "/circle_badges/spider_circle_red.svg";
+        this.SPIDERSENSE_BADGE_PATH = process.env.PUBLIC_URL + "/circle_badges/spider_circle_red.svg";
 
         // Bind methods
         this.getProjectPath = this.getProjectPath.bind(this);
@@ -58,7 +58,7 @@ class Drawer extends React.Component {
             <div id="drawer">
                 <div className="drawerIcon">
                     <div>
-                        <img src={process.env.PUBLIC_URL + this.SPIDERSENSE_BADGE_PATH}/>
+                        <img src={this.SPIDERSENSE_BADGE_PATH}/>
                     </div>
                 </div>
                 <div className="drawerTitle">
@@ -66,19 +66,19 @@ class Drawer extends React.Component {
                 </div>
 
                 <div className="drawerNavigation">
-                    <NavLink to="/" className="styledNavLink">
+                    <NavLink exact to="/" className="styledNavLink" activeClassName="activeNavLink">
                         <div className="navIcon">
                             <HomeOutlinedIcon style={{fill: "white"}}/>
                         </div>
                         <p className="navText">Home</p>
                     </NavLink>
-                    <NavLink to={this.getProjectPath()} className="styledNavLink">
+                    <NavLink to={this.getProjectPath()} className="styledNavLink" activeClassName="activeNavLink">
                         <div className="navIcon">
                             <AssessmentOutlinedIcon style={{fill: "white"}}/>
                         </div>
                         <p className="navText">Project</p>
                     </NavLink>
-                    <NavLink to="/about" className="styledNavLink">
+                    <NavLink to="/about" className="styledNavLink" activeClassName="activeNavLink">
                         <div className="navIcon">
                             <GroupIcon style={{fill: "white"}}/>
                         </div>

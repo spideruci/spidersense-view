@@ -54,7 +54,8 @@ class Tarantula extends Component {
             // Fault localization
             suspiciousness: [],
 
-            // Dialogs
+            // Buttons and Dialogs
+            isButtonGroupDisabled: true,
             isViewScoresDisabled: true,
             isDialogOpened: false,
             isSuspDialogOpened: false,
@@ -871,6 +872,16 @@ class Tarantula extends Component {
     }
 
     /**
+     * Sets disabled attribute for the button group, which will enable
+     * or disable all buttons in the group.
+     */
+    setButtonGroupDisabled(disabled) {
+        this.setState((state) => ({
+            isButtonGroupDisabled: disabled
+        }));
+    }
+
+    /**
      * Checks if any tests have been activated on the directory view.
      * If none are, then disables the view scores button. Enabled otherwise
      */
@@ -915,7 +926,7 @@ class Tarantula extends Component {
 
         // Start with the dialog title
         d3.select("#viewDialogTitle")
-            .text(`Suspiciousness scores for ${obj.name}`);
+            .text(`Fault Localization of ${obj.name}`);
 
         // The hdeaders for table
         let tbody = d3.select("#dialogScoresContainer")
@@ -1110,6 +1121,7 @@ class Tarantula extends Component {
             scrollContainerHeight: 0,
             testcases: [],
             suspiciousness: [],
+            isButtonGroupDisabled: true,
             isViewScoresDisabled: true,
             isDialogOpened: false,
             isSuspDialogOpened: false,
@@ -1162,9 +1174,12 @@ class Tarantula extends Component {
         }
 
         // Update state for the selected commit/sha
-        this.setState(state => ({
+        this.setState((state) => ({
             selectedCommit: sha
         }));
+
+        // Enable or disable the button group
+        this.setButtonGroupDisabled(false);
         
         // Request urls to the source files for current commit
         this.requestSourceLinks(sha);
@@ -1390,7 +1405,9 @@ class Tarantula extends Component {
             <div id="tarantula">
                 <div id="commitContainer">
                     <div id="directoryActions">
-                        <ButtonGroup size="small" variant="text" color="primary" aria-label="small text primary button group">
+                        <ButtonGroup size="small" variant="text" color="primary" 
+                            aria-label="small text primary button group"
+                            disabled={this.state.isButtonGroupDisabled}>
                             <Button className="directoryButton" onClick={(e) => this.onClearOrAllButtonClicked(false, e)}>Clear</Button>
                             <Button className="directoryButton" onClick={(e) => this.onClearOrAllButtonClicked(true, e)}>All</Button>
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>

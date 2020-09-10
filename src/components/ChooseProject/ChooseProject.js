@@ -15,6 +15,33 @@ class ChooseProject extends React.Component {
     constructor(props) {
         super(props);
 
+        // Prepare details for steps
+        const numberOfSteps = 5;
+        let steps = new Array(numberOfSteps);
+
+        // Define title for steps (should match # of steps)
+        const stepTitles = [
+            "Select a Project on the Home page",
+            "Browse Project Overview",
+            "Select a commit under Tarantula",
+            "Select test cases",
+            "View suspicious statements"
+        ];
+
+        for (let i = 0; i < numberOfSteps; i++) {
+            let stepNumber = `Step ${i + 1}:`;
+            let stepTitle = stepTitles[i];
+            let imagePath = `${process.env.PUBLIC_URL}/images/step_0${i + 1}.svg`;
+
+            steps[i] = {
+                number: stepNumber,
+                title: stepTitle,
+                imagePath: imagePath
+            };
+        }
+
+        this.steps = steps;
+
         // Bind methods
         this.onSelectProjectClicked = this.onSelectProjectClicked.bind(this);
     } 
@@ -63,25 +90,14 @@ class ChooseProject extends React.Component {
                 </div>
 
                 <div className="stepsWrapper">
-                    <div>
-                        <p><span className="stepsTitle">Step 1:</span> Select a project on the Home page</p>
-                    </div>
-
-                    <div>
-                        <p><span className="stepsTitle">Step 2:</span> Browse project overview</p>
-                    </div>
-
-                    <div>
-                        <p><span className="stepsTitle">Step 3:</span> Select a commit</p>
-                    </div>
-
-                    <div>
-                        <p><span className="stepsTitle">Step 4:</span> Select test cases</p>
-                    </div>
-
-                    <div>
-                        <p><span className="stepsTitle">Step 5:</span> View suspicious statements</p>
-                    </div>
+                    {this.steps.map((step) => (
+                        <div>
+                            <p><span className="stepsTitle">{step.number}</span> {step.title}</p>
+                            <div>
+                                <img src={step.imagePath} />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
          );

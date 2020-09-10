@@ -66,15 +66,25 @@ $color-steps-title: #D91212;
         @extend %flex-column-center;
 
         > div {
-            width: 70%;
+            width: 60%;
+            margin-bottom: 48px;
         }
         > div > p {
-            padding: 8px;
+            font-size: 1.2rem;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        > div > div {
+
+        }
+        > div > div img {
+            display: block;
+            width: 100%;
         }
     }
     .stepsTitle {
         color: $color-steps-title;
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         font-weight: bold;
     }
 }

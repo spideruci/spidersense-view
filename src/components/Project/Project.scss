@@ -9,13 +9,18 @@
 ============================================================================ */
 #project {
     background-color: $background-color-primary;
+    position: relative;
     min-height: 100vh;
 
-    /* Header */
-    .projectHeader {
-        background-color: $background-color-primary-light;
-        box-shadow: $component-shadow;
-        padding: 12px 24px;
+    /* Backdrop */
+    .backdrop {
+        position: absolute;
+        width: 100%;
+        height: 100vh;
+        z-index: 15;
+    }
+    .backdrop > div {
+        color: $color-text-primary-inverse;
     }
 
     /* Content */
@@ -38,5 +43,10 @@
         &:hover {
             cursor: pointer;   
         }
+    }
+    .activeTab p {
+        // color: $color-text-secondary;
+        font-weight: bold;
+        // background-color: red;
     }
 }
