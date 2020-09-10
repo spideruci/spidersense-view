@@ -11,7 +11,7 @@ class Error extends React.Component {
      constructor(props) {
         super(props);
 
-        this.SPIDERSENSE_BADGE_PATH = "/circle_badges/spider_circle_blue.svg";
+        this.SPIDERSENSE_BADGE_PATH = process.env.PUBLIC_URL + "/circle_badges/spider_circle_blue.svg";
     } 
 
     /** =======================================================================

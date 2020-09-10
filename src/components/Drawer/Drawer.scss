@@ -58,6 +58,9 @@ $drawer-icon-width: 108px;
             transition: all 0.3s ease;
         }
     }
+    .activeNavLink {
+        background-color: $color-navlink-hover;
+    }
 
     .navIcon {
         display: flex;

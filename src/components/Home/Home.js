@@ -8,6 +8,8 @@ import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { spidersenseWorkerUrls } from '../../vars/vars';
+import ColorSequence from '../../util/color-sequence';
+import "./../../vars/shared.scss";
 import "./Home.scss";
 
 
@@ -20,6 +22,7 @@ class Home extends React.Component {
     constructor(props) {
         super(props);
 
+        // Variables
         this.viewOptions = [];
 
         // Initalize state
@@ -80,12 +83,16 @@ class Home extends React.Component {
      * Set current view index to the module view.
      */
     initializeViewOptions() {
+        // Get color sequence to set background color of module project units
+        let colorSequence = new ColorSequence();
+        let sequence = colorSequence.getColorSequence(this.state.projects.length);
+
         this.viewOptions = [
             {
                 viewName: "module",
-                container: this.state.projects.map((p) => (
+                container: this.state.projects.map((p, i) => (
                     <div className="projectUnit projectUnitModule" onClick={(e) => this.onProjectClicked(p.projectId, e)}>
-                        <div></div>
+                        <div style={{backgroundColor: sequence[i]}}></div>
                         <div>
                             <p>{p.projectName}</p>
                             <p>{p.projectLink}</p>
@@ -188,14 +195,20 @@ class Home extends React.Component {
      render() {
          return (
             <div id="home">
-                <div className="projectHeader">
-                    <div>
-                        <ViewModuleIcon onClick={(e) => this.updateCurrentViewOption(0, e)}/>
+                <div className="toolbar">
+                    <div className="toolbarTitle">
+                        <p>Welcome</p>
                     </div>
-                    <div>
-                        <ViewListIcon onClick={(e) => this.updateCurrentViewOption(1, e)}/>
+                    <div className="toolbarActions">
+                        <div>
+                            <ViewModuleIcon onClick={(e) => this.updateCurrentViewOption(0, e)}/>
+                        </div>
+                        <div>
+                            <ViewListIcon onClick={(e) => this.updateCurrentViewOption(1, e)}/>
+                        </div>
                     </div>
                 </div>
+
                 <div className="homeView">
                     {this.populateHomeView()}
                 </div>

@@ -2,10 +2,14 @@ import React from 'react';
 
 import * as d3 from 'd3';
 
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
+
 import Overview from '../Overview/Overview';
 import Tarantula from '../Tarantula/Tarantula';
 
 import {spidersenseWorkerUrls} from '../../vars/vars';
+import "./../../vars/shared.scss";
 import "./Project.scss";
 
 
@@ -18,6 +22,7 @@ class Project extends React.Component {
     constructor(props) {
         super(props);
 
+        // Variables
         this.tabs = [];
 
         // Initialize state
@@ -27,7 +32,8 @@ class Project extends React.Component {
                 projectName: "",
                 projectLink: ""
             },
-            currentTabIndex: -1
+            currentTabIndex: -1,
+            backdropOpen: true
         };
 
         // Bind methods
@@ -88,6 +94,7 @@ class Project extends React.Component {
             this.requestCommits(projectId);
         }).catch((error) => {
             console.error(error);
+            this.closeBackdrop();
         });
     }
 
@@ -109,8 +116,11 @@ class Project extends React.Component {
 
             // Initialize the tabs
             this.initializeTabs(data.builds);
+
+            this.closeBackdrop();
         }).catch((error) => {
             console.error(error);
+            this.closeBackdrop();
         });
     }
 
@@ -149,9 +159,7 @@ class Project extends React.Component {
             });
         
         // Update state to set current tab to Overview (re-renders)
-        this.setState((state) => ({
-            currentTabIndex: 0
-        }));
+        this.updateCurrentTab(0);
     }
 
     /**
@@ -174,12 +182,25 @@ class Project extends React.Component {
      ======================================================================= */
 
     /**
-     * Update the state to set currentTabIndex to the selected index
+     * Update the state to set currentTabIndex to the selected index. 
+     * Also update the activeTab class.
      * @param {number} index The selected tab index
      */
     updateCurrentTab(index) {
         this.setState((state) => ({
             currentTabIndex: index
+        }));
+
+        let tabsContainer = d3.select(".projectTabs")
+            .selectAll("div")
+            .classed("activeTab", false);
+        tabsContainer.filter((d, i) => i === index)
+            .classed("activeTab", true);
+    }
+
+    closeBackdrop() {
+        this.setState((state) => ({
+            backdropOpen: false
         }));
     }
 
@@ -191,10 +212,11 @@ class Project extends React.Component {
      render() {
         return (
             <div id="project">
-                <div className="projectHeader">
-                    <div>
+                <div className="toolbar">
+                    <div className="toolbarTitle">
                         <p>{this.state.project.projectName}</p>
                     </div>
+                    <div></div>
                 </div>
 
                 <div className="projectContent">
@@ -204,6 +226,10 @@ class Project extends React.Component {
                         {this.populateProjectContainer()}
                     </div>
                 </div>
+
+                <Backdrop className="backdrop" open={this.state.backdropOpen}>
+                        <CircularProgress color="inherit" />
+                </Backdrop>
             </div>
         );
      }
