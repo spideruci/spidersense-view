@@ -51,6 +51,7 @@ class About extends React.Component {
                                     </div>
                                     <div className="memberDetails">
                                         <p>{m.name}</p>
+                                        <p>{m.position}</p>
                                         <p>{m.description}</p>
                                     </div>
                                 </div>

@@ -7,7 +7,7 @@ $background-color-filecontainer-hover: #363636;
 $color-svgcontainer-border: #B4B4B4;
 $color-sliderrect: #0091ea;
 
- /* ============================================================================
+/* ============================================================================
  * Tarantula Component Rules
  * ========================================================================= */
 #tarantula {
@@ -15,11 +15,12 @@ $color-sliderrect: #0091ea;
     * Directory Actions and Commit Select
     ============================================================================ */
     #commitContainer {
+        max-width: 1280px;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        margin: 12px auto;
     }
     /* Clear, All, Passed, and Failed Actions */
     #directoryActions {
@@ -33,8 +34,10 @@ $color-sliderrect: #0091ea;
     * Tarantula Wrapper (for directory view, minimap, and display view)
     ============================================================================ */
     #tarantulaWrapper {
+        position: relative;
         display: flex;
         flex-direction: row;
+        justify-content: center;
         align-items: stretch;
     }
 
@@ -139,13 +142,13 @@ $color-sliderrect: #0091ea;
     * Scroll Container (display view)
     ============================================================================ */
     #scrollContainer {
-        // position: relative;
         background-color: $background-color-tarantula;
         box-shadow: $component-shadow;
         height: 512px;
         overflow-y: scroll;
 
         table {
+            display: block;
             border-collapse: collapse;
         }
         table tr td {
@@ -160,9 +163,9 @@ $color-sliderrect: #0091ea;
 /* Select input for commit id */
 #selectCommit,
 .taranMenuItem {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
     width: 480px;
     min-width: 244px;
 
@@ -191,6 +194,18 @@ $color-sliderrect: #0091ea;
     .menuItemCommitId {
         color: $color-text-commits;
     }
+}
+
+/* Circular Progress */
+#progressWrapper {
+    background-color: $background-color-primary;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 }
 
 /* ============================================================================
@@ -265,5 +280,13 @@ $color-sliderrect: #0091ea;
     } 
     table td:nth-of-type(4) {
         white-space: pre;
+    }
+}
+
+@media only screen and (min-width: 1408px) {
+    #tarantula {
+        #directoryContainer {
+            margin-right: 48px;
+        }
     }
 }

@@ -1,7 +1,7 @@
 import React, { Component, createRef } from 'react';
 
 import * as d3 from 'd3';
-import {extractFileName, extractFileNameByDot} from '../../util/file-name-parser';
+import {extractSourceNameFromRawGithubUrl, extractFileNameFromSourceName} from '../../util/file-name-parser';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
 import Suspiciousness from '../../models/Suspiciousness';
 
@@ -16,6 +16,7 @@ import PageviewIcon from '@material-ui/icons/Pageview';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { spidersenseWorkerUrls } from '../../vars/vars';
 import "./Tarantula.scss";
@@ -54,9 +55,10 @@ class Tarantula extends Component {
             // Fault localization
             suspiciousness: [],
 
-            // Buttons and Dialogs
+            // Buttons, Progresses, and Dialogs
             isButtonGroupDisabled: true,
             isViewScoresDisabled: true,
+            isRequestingFromWorker: false,
             isDialogOpened: false,
             isSuspDialogOpened: false,
             coverableIndex: -1
@@ -116,18 +118,21 @@ class Tarantula extends Component {
      * @param {string} sha The commit id
      */
     requestSourceLinks(sha) {
-        let url = `${spidersenseWorkerUrls.getSourceInfo}/${sha}`;
+        let url = `${spidersenseWorkerUrls.getSourceInfo}${sha}`;
 
         fetch(url, {
             method: 'GET'
         }).then((response) => {
             return response.json();
         }).then((data) => {            
-            console.log("Callback:\n" + JSON.stringify(data.sourceLinks));
+            // console.log("Callback:\n" + JSON.stringify(data.sourceLinks));
 
             this.downloadContentsFromGithub(data.sourceLinks);
         }).catch((error) => {
             console.error(error);
+            this.setState((state) => ({
+                isRequestingFromWorker: false
+            }));
         });
     }
 
@@ -140,8 +145,8 @@ class Tarantula extends Component {
     downloadContentsFromGithub(sourceLinks) {
         // Get names of source links and links in different arrays
         let names = sourceLinks.map((u) => {
-            return extractFileName(u);
-        });
+            return extractSourceNameFromRawGithubUrl(u);
+        })
         let urls = sourceLinks;
 
         // Make the request for all files
@@ -153,7 +158,7 @@ class Tarantula extends Component {
                 return data;
             });
         })).then((fileTexts) => {
-            console.log('Callback:\n', fileTexts);
+            // console.log('Callback:\n', fileTexts);
 
             // Generate file container
             const numberOfFileContainers = fileTexts.length;
@@ -162,7 +167,7 @@ class Tarantula extends Component {
             let allFiles = new Array(numberOfFileContainers);
 
             for (let i = 0; i < fileTexts.length; i++) {
-                console.log(`File text: ${fileTexts[i]}`);
+                // console.log(`File text: ${fileTexts[i]}`);
 
                 // Get text and split by newline, for each empty element, replace with newline
                 let text = fileTexts[i];
@@ -179,7 +184,7 @@ class Tarantula extends Component {
                 allFiles[i] = o;
 
                 // Generate minimap(s) for the current file
-                this.generateMinimap(names[i], textArray, i);
+                this.generateMinimap(extractFileNameFromSourceName(names[i]), textArray, i);
             }
 
             // Update state so that allFiles contains the text of each file retrieved
@@ -191,6 +196,9 @@ class Tarantula extends Component {
             this.requestTestcases();
         }).catch((error) => {
             console.error(error);
+            this.setState((state) => ({
+                isRequestingFromWorker: false
+            }));
         });
     }
 
@@ -200,18 +208,25 @@ class Tarantula extends Component {
      */
     requestTestcases() {
         let selectedCommitId = this.state.selectedCommit;
-        let url = `${spidersenseWorkerUrls.getAllTestcases}/${selectedCommitId}`;
+        let url = `${spidersenseWorkerUrls.getAllTestcases}${selectedCommitId}`;
 
         fetch(url, {
             method: 'GET'
         }).then((response) => {
             return response.json();
         }).then((data) => {            
-            console.log("Callback:\n" + JSON.stringify(data));
+            // console.log("Callback:\n" + JSON.stringify(data));
 
-            this.generateDirectoryView(data)
+            this.generateDirectoryView(data);
+
+            this.setState((state) => ({
+                isRequestingFromWorker: false
+            }));
         }).catch((error) => {
             console.error(error);
+            this.setState((state) => ({
+                isRequestingFromWorker: false
+            }));
         });
     }
 
@@ -241,7 +256,7 @@ class Tarantula extends Component {
         
         // Map test ids to server url
         let urls = activatedTestCases.map((t) => {
-            return `${spidersenseWorkerUrls.testcaseCoverage}/${t.toString()}`;
+            return `${spidersenseWorkerUrls.testcaseCoverage}${t.toString()}`;
         });
 
         // console.log("Activated tests: " + activatedTestCases);
@@ -256,7 +271,7 @@ class Tarantula extends Component {
                 return data;
             });
         })).then((response) => {
-            console.log('Callback:\n' + JSON.stringify(response));
+            // console.log('Callback:\n' + JSON.stringify(response));
             /*
              * Get suspiciousness data from Suspiciousness module
              * Suspiciousness score object expected to be:
@@ -271,7 +286,7 @@ class Tarantula extends Component {
              */
             let susp = new Suspiciousness(response);
             let suspiciousnessScores = susp.suspiciousness();
-            console.log("Suspiciousness:\n" + JSON.stringify(suspiciousnessScores));
+            // console.log("Suspiciousness:\n" + JSON.stringify(suspiciousnessScores));
 
             // Update state to retain scores
             this.setState((state) => ({
@@ -355,7 +370,7 @@ class Tarantula extends Component {
 
             let divI = svgContainerD3.append("div");
             let svgI = divI.append("svg")
-                .attr("width", this.SVG_WIDTH)
+                .attr("width", this.SVG_WIDTH + "px")
                 .attr("height", svgHeight);
             let textI = svgI.append("text")
                 .attr("x", 0)
@@ -481,8 +496,6 @@ class Tarantula extends Component {
      * Update the state to save the scrollContainerHeight
      */
     generateDisplay(index) {
-        console.log("generateDisplay() - index #" + index);
-
         // Grab contents from state
         let obj = this.state.allFiles[index];
         let content = obj.contents;
@@ -490,9 +503,11 @@ class Tarantula extends Component {
         // Clear everything in scroll view
         d3.select("#scrollContainer").selectAll("*").remove();
 
+        console.log("TABLE WIDTH: " + (this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2)));
+
         let table = d3.select("#scrollContainer")
             .append("table")
-            .attr('width', this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2));
+            .attr('width', (this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2)) + "px");
         let tablebody = table
             .append("tbody");
 
@@ -512,6 +527,7 @@ class Tarantula extends Component {
             .data(content)
             .text(d => d)
             .attr("style","white-space:pre")
+            // .attr("style", "overflow-x: scroll")
             .style('font-size', this.SCROLL_FONT_SIZE.toString() + "px");
         
         // Add padding to view
@@ -571,10 +587,10 @@ class Tarantula extends Component {
         // Use multiplier to calculate slider's height
         const SLIDER_HEIGHT = Math.floor((SCROLL_HEIGHT - (this.SCROLL_CONTAINER_PADDING * 2)) / multiplier);
 
-        console.log("Max number of svgs: " + maxNumSvgs 
-            + "\ncurrentMinimapHeight: " + currentMinimapHeight
-            + "\nscrollContainer height: " + scrollContainerHeight
-            + "\nmultiplier: " + multiplier);
+        // console.log("Max number of svgs: " + maxNumSvgs 
+        //     + "\ncurrentMinimapHeight: " + currentMinimapHeight
+        //     + "\nscrollContainer height: " + scrollContainerHeight
+        //     + "\nmultiplier: " + multiplier);
 
         // Get handle on the scroll container
         let scrollContainer = document.getElementById('scrollContainer');
@@ -588,23 +604,23 @@ class Tarantula extends Component {
             .append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", SVG_WIDTH)
+            .attr("width", SVG_WIDTH + "px")
             .attr("height", SLIDER_HEIGHT)
             .attr("class", "sliderRect");
         
         // Event: Drag on the minimap
         let drag = d3.drag()
             .on('start drag', function(d, i) { 
-                console.log("Event: Drag => Coordinates: (" + d3.event.x + ", " + d3.event.y + ")"
-                    + "\nSvg #" + i);
+                // console.log("Event: Drag => Coordinates: (" + d3.event.x + ", " + d3.event.y + ")"
+                //     + "\nSvg #" + i);
 
                 if (d3.event.y > currentMinimapHeight) {
-                    console.log("ERROR: Can't drag out");
+                    // console.log("ERROR: Can't drag out");
                 } else {
-                    console.log("scrolling... - calculated: " + Math.ceil((d3.event.y + (currentSvgIndex * SVG_MAX_HEIGHT)) * multiplier));
-                    console.log("currentsvgindex: " + currentSvgIndex 
-                        + "\nsvg max height: " + SVG_MAX_HEIGHT
-                        + "\nmultiplier: " + multiplier);
+                    // console.log("scrolling... - calculated: " + Math.ceil((d3.event.y + (currentSvgIndex * SVG_MAX_HEIGHT)) * multiplier));
+                    // console.log("currentsvgindex: " + currentSvgIndex 
+                    //     + "\nsvg max height: " + SVG_MAX_HEIGHT
+                    //     + "\nmultiplier: " + multiplier);
                     scrollContainer.scrollTop = Math.ceil((d3.event.y + (currentSvgIndex * SVG_MAX_HEIGHT)) * multiplier);
                 }
             });
@@ -615,10 +631,10 @@ class Tarantula extends Component {
             .selectAll(".svgContainer > div > svg")
             .on("mousedown", (d, i, nodes) => {
                 if (i === currentSvgIndex) {
-                    console.log("Event: Mousedown: Same Svg #" + i);
+                    // console.log("Event: Mousedown: Same Svg #" + i);
                     return;
                 }
-                console.log("Event: Mousedown: Different Svg #" + i);
+                // console.log("Event: Mousedown: Different Svg #" + i);
 
                 // Remove any sliders that are in the transition state
                 if (currentSliderState === sliderState.TRANSITION_BACK) {
@@ -637,7 +653,7 @@ class Tarantula extends Component {
                 pt.y = d3.event.clientY;        
                 var cursorpt =  pt.matrixTransform(node.getScreenCTM().inverse());
 
-                console.log("Mousedown Coordinates: (" + cursorpt.x + ", " + cursorpt.y + ")");
+                // console.log("Mousedown Coordinates: (" + cursorpt.x + ", " + cursorpt.y + ")");
 
                 // Remove current slider and drag behavior
                 currentSvg.select('.sliderRect').remove();
@@ -650,7 +666,7 @@ class Tarantula extends Component {
                 slider = d3.select(allSvgs[currentSvgIndex])
                     .append('rect')
                     .attr('class', 'sliderRect')
-                    .attr('width', SVG_WIDTH)
+                    .attr('width', SVG_WIDTH + "px")
                     .attr('height', SLIDER_HEIGHT)
                     .attr('y', cursorpt.y);
                 transitionSlider = null;
@@ -667,9 +683,9 @@ class Tarantula extends Component {
             .call(drag);
         
         // Event: Scrolling the scroll container
-        let container = d3.select(scrollContainer)
+        d3.select(scrollContainer)
             .on('scroll', function(d) {
-                console.log("Event: Scroll: scrollTop = " + this.scrollTop);
+                // console.log("Event: Scroll: scrollTop = " + this.scrollTop);
                 slider.attr('y', Math.floor(this.scrollTop / multiplier) - (currentSvgIndex * SVG_MAX_HEIGHT));
 
                 // Determine slider state
@@ -678,18 +694,18 @@ class Tarantula extends Component {
                         && currentSvgIndex + 1 < maxNumSvgs)
                         || (Math.floor(this.scrollTop / multiplier) < currentSvgIndex * SVG_MAX_HEIGHT
                         && currentSvgIndex - 1 >= 0) ) {
-                        console.log("Entering a transition...");
+                        // console.log("Entering a transition...");
 
                         let transitionIndex = currentSvgIndex;
                         let transitionSliderPosY;
 
                         // Transition next
                         if (Math.floor(this.scrollTop / multiplier) >= (currentSvgIndex + 1) * SVG_MAX_HEIGHT - SLIDER_HEIGHT) {
-                            console.log("Transition next");
+                            // console.log("Transition next");
                             transitionIndex += 1;
                             currentSliderState = sliderState.TRANSITION_NEXT;
                         } else {
-                            console.log("Transition back");
+                            // console.log("Transition back");
                             transitionIndex -= 1;
                             currentSliderState = sliderState.TRANSITION_BACK;
                         }
@@ -700,13 +716,13 @@ class Tarantula extends Component {
                         transitionSlider = d3.select(allSvgs[transitionIndex])
                             .append('rect')
                             .attr('class', 'sliderRect')
-                            .attr('width', SVG_WIDTH)
+                            .attr('width', SVG_WIDTH + "px")
                             .attr('height', SLIDER_HEIGHT)
                             .attr('y', transitionSliderPosY);
                     }
                 }
                 else {
-                    console.log("transitioning...");
+                    // console.log("transitioning...");
                     if (currentSliderState === sliderState.TRANSITION_NEXT) {
                         transitionSlider.attr('y', Math.floor(this.scrollTop / multiplier) - ((currentSvgIndex + 1) * SVG_MAX_HEIGHT));
 
@@ -739,7 +755,7 @@ class Tarantula extends Component {
                     // If successfully transitioned
                     if (Math.floor(this.scrollTop / multiplier) >= (currentSvgIndex + 1) * SVG_MAX_HEIGHT
                         || Math.floor(this.scrollTop / multiplier) < (currentSvgIndex * SVG_MAX_HEIGHT) - SLIDER_HEIGHT) {
-                        console.log("Entered transitioned svg");
+                        // console.log("Entered transitioned svg");
 
                         // Remove current slider and drag behavior
                         currentSvg.select('.sliderRect').remove();
@@ -780,12 +796,9 @@ class Tarantula extends Component {
      */
     displayCoverageOnMinimap(suspiciousnessScores) {
         for (let score of suspiciousnessScores) {
-            // Extract source name
-            let extractedSource = extractFileNameByDot(score.source);
-
             // Find index of file container
             let fileContainerIndex = this.state.allFiles.findIndex((val) => {
-                return (extractedSource === val.name);
+                return (score.source === val.name);
             });
 
             if (fileContainerIndex === -1) {
@@ -798,7 +811,7 @@ class Tarantula extends Component {
                 .filter(function(d, i) {return i === fileContainerIndex})
                 .selectAll(".svgContainer > div > svg");
 
-            // console.log("source: " + extractedSource
+            // console.log("source: " + score.source
             //     + "\nFile container index: " + fileContainerIndex
             //     + "\nNumber of svg nodes: " + svgsD3.nodes().length);
 
@@ -812,7 +825,7 @@ class Tarantula extends Component {
                 // Create a rect with the appropriate color
                 svgsD3.filter(function(d, f) {return f === svgNumber})
                     .append("rect")
-                    .attr("width", this.SVG_WIDTH)
+                    .attr("width", this.SVG_WIDTH + "px")
                     .attr("height", this.PIXELS_PER_LINE)
                     .attr("x", 0)
                     .attr("y", this.PIXELS_PER_LINE * ((lineObject.linenumber - 1) % this.LINES_PER_SVG ))
@@ -829,7 +842,7 @@ class Tarantula extends Component {
     displayCoverageOnDisplay() {
         // Return if no file container was selected
         if (this.state.selectionIndex === -1) {
-            console.log("No file containers were selected");
+            // console.log("No file containers were selected");
             return;
         }
 
@@ -842,7 +855,7 @@ class Tarantula extends Component {
 
         // Filter appropriate score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
-            return extractFileNameByDot(s.source) === fileName;
+            return s.source === fileName;
         });
         if (scoresArr.length === 0) {
             console.error("Unable to find source name");
@@ -894,7 +907,7 @@ class Tarantula extends Component {
             .map(n => n.getAttribute("key"));
 
         // Update state to enable or disable viewScores button
-        let enabled = (activatedTestCases.length > 0) && this.state.selectionIndex != -1;
+        let enabled = (activatedTestCases.length > 0) && this.state.selectionIndex !== -1;
         this.setState((state) => ({
             isViewScoresDisabled: !enabled
         }));
@@ -921,7 +934,7 @@ class Tarantula extends Component {
 
         // Filter score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
-            return extractFileNameByDot(s.source) === fileName;
+            return s.source === fileName;
         });
 
         // Start with the dialog title
@@ -1014,7 +1027,7 @@ class Tarantula extends Component {
 
         // Filter appropriate score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
-            return extractFileNameByDot(s.source) === fileName;
+            return s.source === fileName;
         });
         if (scoresArr.length === 0) {
             return <p>An error occurred</p>;
@@ -1107,8 +1120,15 @@ class Tarantula extends Component {
     resetComponent() {
         // Remove nodes
         d3.select("#directoryContainer").selectAll("*").remove();
+        d3.select("#directoryContainer")
+            .style("height", null)
+            .style("padding", null);
         d3.select("#horizontalScrollView").selectAll("*").remove();
+        d3.select("#horizontalScrollView")
+            .style("width", null);
         d3.select("#scrollContainer").selectAll("*").remove();
+        d3.select("#scrollContainer")
+            .style("padding", null);
 
         // Reset state
         // NOTE: commits[] is not reset 
@@ -1142,7 +1162,6 @@ class Tarantula extends Component {
         
         // If the display view is shown, remove coverage nodes 
         if (this.state.selectionIndex !== -1) {
-            console.log("Removing coverableTr class");
             let trD3 = d3.select("#scrollContainer table tbody")
                 .selectAll("tr.coverable")
                 .style("background-color", null)
@@ -1175,7 +1194,9 @@ class Tarantula extends Component {
 
         // Update state for the selected commit/sha
         this.setState((state) => ({
-            selectedCommit: sha
+            selectedCommit: sha,
+            // Show progress
+            isRequestingFromWorker: true
         }));
 
         // Enable or disable the button group
@@ -1236,7 +1257,7 @@ class Tarantula extends Component {
      */
     updateSelection(index) {
         if (this.state.selectionIndex === index) {
-            console.log("Already in same file container. Returning...");
+            // console.log("Already in same file container. Returning...");
             return;
         }
 
@@ -1323,16 +1344,16 @@ class Tarantula extends Component {
         }
         // console.log("testcaseIds: " + testcaseIds);
 
-        // For checkboxes whose id is included in testcaseIds, check 
-        let includedCheckboxes = d3.selectAll(".testcase")
+        // (Included checkboxes) For checkboxes whose id is included in testcaseIds, check 
+        d3.selectAll(".testcase")
             .select("input")
             .filter(function(d, i) {
                 return testcaseIds.includes(d3.select(this).attr("key"));
             })
             .property("checked", true);;
         
-        // For checkboxes whose id is not included in testcaseIds, uncheck
-        let excludedCheckboxes = d3.selectAll(".testcase")
+        // (Exlucded checkboxes) For checkboxes whose id is not included in testcaseIds, uncheck
+        d3.selectAll(".testcase")
             .select("input")
             .filter(function(d, i) {
                 return !testcaseIds.includes(d3.select(this).attr("key"));
@@ -1379,17 +1400,20 @@ class Tarantula extends Component {
     onDialogClose(dlg) {
         switch(dlg) {
             case "view": {
-                console.log("Dialog for view closed");
+                // console.log("Dialog for view closed");
                 this.setState((state) => ({
                     isDialogOpened: false
                 }));
                 break;
             }
             case "susp": {
-                console.log("Dialog for susp closed");
+                // console.log("Dialog for susp closed");
                 this.setState((state) => ({
                     isSuspDialogOpened: false
                 }));
+                break;
+            }
+            default: {
                 break;
             }
         }
@@ -1462,6 +1486,12 @@ class Tarantula extends Component {
                         <div id="horizontalScrollView"></div> 
                         <div id="scrollContainer"></div>
                     </div>
+                    {
+                        this.state.isRequestingFromWorker &&
+                        <div id="progressWrapper">
+                            <CircularProgress color="secondary" />
+                        </div>
+                    }
                 </div>
 
                 <Dialog 

@@ -80,7 +80,7 @@ class Overview extends Component {
                     <p className="recentCommitsTitle">Recent Commits</p>
                     {
                         this.state.commits.map((c) => (
-                            <div className="recentCommitsItem">
+                            <div className="recentCommitsItem" key={c.commitId}>
                                 <div>
                                     <p className="recentCommitsMessage">{shortenMessage(c.message)}</p>
                                     <p>

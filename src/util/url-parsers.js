@@ -21,3 +21,20 @@ function getUserFromGithubUrl(url) {
     return splitUrl[0];
 }
 export {getUserFromGithubUrl};
+
+/**
+ * Given a url from Github, shorted it to a specific number of 
+ * characters
+ * @param {string} url The Github url
+ * @param {number} length The number of characters to shorten to
+ * @return {string} The shortened url
+ */
+function shortenGithubUrl(url, length) {
+    if (url.length <= length) {
+        return url;
+    }
+
+    // const MAX_CHARACTERS = 47;
+    return `${url.substring(0, length)}...`;
+}
+export {shortenGithubUrl};

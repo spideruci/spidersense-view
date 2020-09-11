@@ -8,6 +8,7 @@ import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { spidersenseWorkerUrls } from '../../vars/vars';
+import { shortenGithubUrl } from '../../util/url-parsers';
 import ColorSequence from '../../util/color-sequence';
 import "./../../vars/shared.scss";
 import "./Home.scss";
@@ -95,7 +96,7 @@ class Home extends React.Component {
                         <div style={{backgroundColor: sequence[i]}}></div>
                         <div>
                             <p>{p.projectName}</p>
-                            <p>{p.projectLink}</p>
+                            <p>{shortenGithubUrl(p.projectLink, 50)}</p>
                             <div>
                                 <GitHubIcon onClick={(e) => this.openGithubLink(p.projectLink, e)} />
                             </div>
@@ -108,7 +109,7 @@ class Home extends React.Component {
                 container: this.state.projects.map((p) => (
                         <div className="projectUnit projectUnitList" onClick={(e) => this.onProjectClicked(p.projectId, e)}>
                             <p>{p.projectName}</p>
-                            <p>{p.projectLink}</p>
+                            <p>{shortenGithubUrl(p.projectLink, 50)}</p>
                             <div>
                                 <GitHubIcon onClick={(e) => this.openGithubLink(p.projectLink, e)} />
                             </div>
@@ -129,7 +130,7 @@ class Home extends React.Component {
      * @return {HTML} The DOM elements of the current view option
      */
     populateHomeView() {
-        if (this.viewOptions == null || this.viewOptions == undefined || this.viewOptions.length == 0) {
+        if (this.viewOptions == null || this.viewOptions === undefined || this.viewOptions.length === 0) {
             return;
         }
 
@@ -176,8 +177,10 @@ class Home extends React.Component {
     /**
      * On click of the Github icon, open a new tab to that Github link
      * @param {string} projectLink The url to the Github repo
+     * @param {Object} event The event object
      */
-    openGithubLink(projectLink) {
+    openGithubLink(projectLink, event) {
+        event.stopPropagation();
         window.open(projectLink, '_blank');
     }
 

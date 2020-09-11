@@ -4,7 +4,7 @@
  * @param   {string}    commitId        The commit id
  */
 function shortenCommitId(commitId) {
-    if (commitId == null || commitId == undefined) {
+    if (commitId == null || commitId === undefined) {
         return "Invalid commit id";
     }
 
@@ -17,7 +17,7 @@ export {shortenCommitId};
  * @param   {string}    commitMessage   The commit message
  */
 function shortenMessage(commitMessage) {
-    if (commitMessage == null || commitMessage == undefined) {
+    if (commitMessage == null || commitMessage === undefined) {
         return "<invalid-message>";
     }
 

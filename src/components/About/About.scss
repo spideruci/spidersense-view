@@ -48,11 +48,13 @@ Rules
         color: $color-text-primary;
         font-size: 0.9rem;
         width: 70%;
+        max-width: 1824px;
         margin-bottom: 24px;
     }
     .meetTheTeam {
         @extend %material-container;
         width: 70%;
+        max-width: 1824px;
 
         > p:nth-of-type(1) {
             color: $color-text-primary;
@@ -70,7 +72,7 @@ Rules
         border-top: 1px solid $color-divider;
     }
     .memberPicture {
-        flex: 1;
+        flex-basis: 25%;
         display: flex;
         flex-direction: row;
         justify-content: center;
@@ -84,18 +86,40 @@ Rules
         }
     }
     .memberDetails {
-        flex: 3;
+        flex-basis: 75%;
 
         > p:nth-of-type(1) {
             font-size: 1.0rem;
-            padding: 8px 0px 6px;
+            padding: 4px 0px;
+            margin-bottom: 4px;
         }
 
         > p:nth-of-type(2) {
+            font-style: italic;
+            font-size: 0.8rem;
+            padding: 4px 0px;
+            margin-bottom: 4px;
+        }
+
+        > p:nth-of-type(3) {
             color: $color-text-primary;
             font-size: 0.8rem;
-            padding: 6px 0px 8px;
+            padding: 4px 0px;
             line-height: 18px;
+        }
+    }
+}
+
+@media only screen and (min-width: 1920px) {
+    #about {
+        .memberCard {
+            justify-content: flex-start;
+        }
+        .memberPicture {
+            flex-basis: 15%;
+        }
+        .memberDetails {
+            flex-basis: 65%;
         }
     }
 }

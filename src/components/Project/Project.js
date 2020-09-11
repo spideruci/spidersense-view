@@ -69,7 +69,7 @@ class Project extends React.Component {
      * @param {number} projectId The project id to request details from
      */
     requestProjectDetails(projectId) {
-        let url = `${spidersenseWorkerUrls.getProject}/${projectId}`;
+        let url = `${spidersenseWorkerUrls.getProject}${projectId}`;
 
         fetch(url, {
             method: 'GET'
@@ -105,7 +105,7 @@ class Project extends React.Component {
      * @param {number} projectId The project id
      */
     requestCommits(projectId) {
-        let url = `${spidersenseWorkerUrls.getCommits}/${projectId}`;
+        let url = `${spidersenseWorkerUrls.getCommits}${projectId}`;
 
         fetch(url, {
             method: 'GET'
@@ -145,7 +145,7 @@ class Project extends React.Component {
         ];
 
         // Bind tabs to project tabs DOM nodes
-        let tabs = d3.select(".projectTabs")
+        d3.select(".projectTabs")
             .selectAll("div")
             .data(this.tabs)
             .enter()
@@ -168,7 +168,7 @@ class Project extends React.Component {
      * @return {HTML} The DOM elements of the current tab
      */
     populateProjectContainer() {
-        if (this.tabs == null || this.tabs == undefined || this.tabs.length == 0) {
+        if (this.tabs == null || this.tabs === undefined || this.tabs.length === 0) {
             return;
         }
 

@@ -94,7 +94,7 @@ class ChooseProject extends React.Component {
                         <div>
                             <p><span className="stepsTitle">{step.number}</span> {step.title}</p>
                             <div>
-                                <img src={step.imagePath} />
+                                <img src={step.imagePath} alt={`Step ${step.number}`} />
                             </div>
                         </div>
                     ))}

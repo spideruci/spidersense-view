@@ -24,7 +24,7 @@ class Error extends React.Component {
             <div id="error">
                 <div>
                     <div className="badgeContainer">
-                        <img src={this.SPIDERSENSE_BADGE_PATH} />
+                        <img src={this.SPIDERSENSE_BADGE_PATH} alt="SpiderSense"/>
                     </div>
                     <p className="error404">404 Error</p>
                     <p className="errorDescription">The page you are looking for does not exist</p>

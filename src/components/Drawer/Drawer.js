@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import HomeOutlinedIcon from '@material-ui/icons/HomeOutlined';
 import GroupIcon from '@material-ui/icons/Group';
 import AssessmentOutlinedIcon from '@material-ui/icons/AssessmentOutlined';
-import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+// import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 
 import "./Drawer.scss";
 
@@ -41,7 +41,7 @@ class Drawer extends React.Component {
         const { cookies } = this.props;
         let id = cookies.get("id");
 
-        if (id == undefined) {
+        if (id === undefined) {
             return "/proj";
         }
 
@@ -58,7 +58,7 @@ class Drawer extends React.Component {
             <div id="drawer">
                 <div className="drawerIcon">
                     <div>
-                        <img src={this.SPIDERSENSE_BADGE_PATH}/>
+                        <img src={this.SPIDERSENSE_BADGE_PATH} alt="SpiderSense"/>
                     </div>
                 </div>
                 <div className="drawerTitle">
