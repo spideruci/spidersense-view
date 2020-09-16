@@ -50,6 +50,17 @@ Rules
         width: 70%;
         max-width: 1824px;
         margin-bottom: 24px;
+
+        div > p:not(.welcomeTitle) {
+            margin: 8px 0px;
+        }
+    }
+    .welcomeTitle {
+        color: $color-text-primary;
+        font-weight: bold;
+        font-size: 1.2rem;
+        padding: 4px 0px;
+        margin-top: 20px;
     }
     .meetTheTeam {
         @extend %material-container;
@@ -96,16 +107,36 @@ Rules
 
         > p:nth-of-type(2) {
             font-style: italic;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             padding: 4px 0px;
             margin-bottom: 4px;
         }
 
         > p:nth-of-type(3) {
             color: $color-text-primary;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             padding: 4px 0px;
             line-height: 18px;
+        }
+    }
+}
+
+@media only screen and (max-width: 1024px) {
+    #about {
+        .memberCard {
+            flex-direction: column;
+        }
+        .memberDetails > p:nth-of-type(1) {
+            text-align: center;
+        }
+        .memberDetails > p:nth-of-type(2) {
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .memberDetails > p:nth-of-type(3) {
+            font-size: 0.8rem;
+            width: 80%;
+            margin: 0px auto;
         }
     }
 }

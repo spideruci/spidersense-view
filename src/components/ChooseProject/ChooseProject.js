@@ -1,5 +1,7 @@
 import React from 'react';
 
+import * as d3 from 'd3';
+
 import Button from '@material-ui/core/Button';
 
 import {chooseProjectPageDetails} from '../../vars/vars';
@@ -44,7 +46,26 @@ class ChooseProject extends React.Component {
 
         // Bind methods
         this.onSelectProjectClicked = this.onSelectProjectClicked.bind(this);
-    } 
+    }
+
+    componentDidMount() {
+        let stepsWrappers = d3.selectAll(".stepsWrapper > div").nodes();
+
+        window.addEventListener("scroll", function(e) {
+            var pageTop = window.scrollY;
+            var pageBottom = pageTop + window.innerHeight;
+
+            for (let i = 0; i < stepsWrappers.length; i++) {
+                let node = stepsWrappers[i];
+
+                if (node.offsetTop < pageBottom) {
+                    node.classList.add("visible");
+                } else {
+                    node.classList.remove("visible");
+                }
+            }
+        });
+    }
 
     /** =======================================================================
      * 

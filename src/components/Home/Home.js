@@ -96,7 +96,7 @@ class Home extends React.Component {
                         <div style={{backgroundColor: sequence[i]}}></div>
                         <div>
                             <p>{p.projectName}</p>
-                            <p>{shortenGithubUrl(p.projectLink, 50)}</p>
+                            <p>{shortenGithubUrl(p.projectLink, 40)}</p>
                             <div>
                                 <GitHubIcon onClick={(e) => this.openGithubLink(p.projectLink, e)} />
                             </div>

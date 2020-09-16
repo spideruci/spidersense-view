@@ -68,6 +68,16 @@ $color-steps-title: #D91212;
         > div {
             width: 60%;
             margin-bottom: 48px;
+
+            /* For Fade-in effect */
+            opacity: 0;
+            transform: translate(0, 20px);
+            transition: all 1s;
+        }
+        /* The visible class to fade in when scroll to */
+        > div.visible {
+            opacity: 1;
+            transform: translate(0, 0);
         }
         > div > p {
             font-size: 1.2rem;
@@ -88,3 +98,24 @@ $color-steps-title: #D91212;
         font-weight: bold;
     }
 }
+
+@media only screen and (max-width: 1024px) {
+    #chooseProject {
+        .title p {
+            font-size: 1.5rem;
+        }
+
+        .intro p,
+        .introList li {
+            font-size: 0.9rem;
+        }
+
+        .stepsWrapper > div > p {
+            font-size: 0.9rem;
+        }
+        .stepsTitle {
+            font-size: 1.0rem;
+        }
+    }
+}
+

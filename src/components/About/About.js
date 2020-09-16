@@ -11,15 +11,6 @@ class About extends React.Component {
      * LIFECYCLE
      * 
      ======================================================================= */
-    constructor(props) {
-        super(props);
-
-        // Initialize state
-        this.state = {
-            teamMembers: aboutPageDetails.members
-        };
-    } 
-
     componentDidMount() {
     }
 
@@ -37,17 +28,30 @@ class About extends React.Component {
                     <p className="title">{aboutPageDetails.title}</p>
 
                     <div className="welcome">
-                        <p>{aboutPageDetails.message}</p>
+                        {aboutPageDetails.messages.map((m) => (
+                            <div>
+                                {m.messageTitle.length !== 0 &&
+                                    <p className="welcomeTitle">{m.messageTitle}</p>
+                                }
+                                <p>{m.message}</p>
+                            </div>
+                        ))}
                     </div>
 
                     <div className="meetTheTeam">
                         <p>{aboutPageDetails.titleMembers}</p>
 
                         <div>
-                            {this.state.teamMembers.map((m) => (
+                            {aboutPageDetails.members.map((m) => (
                                 <div className="memberCard">
                                     <div className="memberPicture">
-                                        <div></div>
+                                        <div style={{
+                                            backgroundImage: `url(${process.env.PUBLIC_URL}/${m.imagePath})`,
+                                            backgroundColor: "#E2E2E2",
+                                            backgroundSize: "cover",
+                                            backgroundPosition: "center",
+                                            backgroundRepeat: "none"
+                                            }}></div>
                                     </div>
                                     <div className="memberDetails">
                                         <p>{m.name}</p>

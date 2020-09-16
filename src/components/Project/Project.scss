@@ -10,6 +10,7 @@
 #project {
     background-color: $background-color-primary;
     position: relative;
+    min-width: 1024px;
     min-height: 100vh;
 
     /* Backdrop */
@@ -45,8 +46,6 @@
         }
     }
     .activeTab p {
-        // color: $color-text-secondary;
         font-weight: bold;
-        // background-color: red;
     }
 }

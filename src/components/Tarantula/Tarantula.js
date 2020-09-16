@@ -125,7 +125,7 @@ class Tarantula extends Component {
         }).then((response) => {
             return response.json();
         }).then((data) => {            
-            // console.log("Callback:\n" + JSON.stringify(data.sourceLinks));
+            console.log("Callback:\n" + JSON.stringify(data.sourceLinks));
 
             this.downloadContentsFromGithub(data.sourceLinks);
         }).catch((error) => {
@@ -259,8 +259,8 @@ class Tarantula extends Component {
             return `${spidersenseWorkerUrls.testcaseCoverage}${t.toString()}`;
         });
 
-        // console.log("Activated tests: " + activatedTestCases);
-        // console.log("Urls: " + urls);
+        console.log("Activated tests: " + activatedTestCases);
+        console.log("Urls: " + urls);
 
         // Make the request for all activated test cases (liveness)
         Promise.all(urls.map((req) => {
@@ -286,7 +286,7 @@ class Tarantula extends Component {
              */
             let susp = new Suspiciousness(response);
             let suspiciousnessScores = susp.suspiciousness();
-            // console.log("Suspiciousness:\n" + JSON.stringify(suspiciousnessScores));
+            console.log("Suspiciousness:\n" + JSON.stringify(suspiciousnessScores));
 
             // Update state to retain scores
             this.setState((state) => ({
@@ -318,7 +318,8 @@ class Tarantula extends Component {
      */
     generateFileContainers(numFiles) {
         let horizontalScollViewD3 = d3.select("#horizontalScrollView")
-            .style("width", this.TABLE_BODY_WIDTH + "px");
+            .style("width", this.TABLE_BODY_WIDTH + "px")
+            .style("overflow-x", "scroll");
         
         for (let i = 0; i < numFiles; i++) {
             horizontalScollViewD3.append("div")
@@ -419,6 +420,7 @@ class Tarantula extends Component {
         
         // Bind data to divs under directory container
         let directorySources = d3.select("#directoryContainer")
+            .style("min-width", "288px")
             .style("height", this.DIRECTORY_HEIGHT.toString() + "px")
             .style("padding", "8px")
             .selectAll("div")
@@ -507,7 +509,8 @@ class Tarantula extends Component {
 
         let table = d3.select("#scrollContainer")
             .append("table")
-            .attr('width', (this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2)) + "px");
+            .attr('width', (this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2)) + "px")
+            .style("overflow-y", "scroll");
         let tablebody = table
             .append("tbody");
 
@@ -1121,14 +1124,17 @@ class Tarantula extends Component {
         // Remove nodes
         d3.select("#directoryContainer").selectAll("*").remove();
         d3.select("#directoryContainer")
+            .style("min-width", null)
             .style("height", null)
             .style("padding", null);
         d3.select("#horizontalScrollView").selectAll("*").remove();
         d3.select("#horizontalScrollView")
-            .style("width", null);
+            .style("width", null)
+            .style("overflow-x", null);
         d3.select("#scrollContainer").selectAll("*").remove();
         d3.select("#scrollContainer")
-            .style("padding", null);
+            .style("padding", null)
+            .style("overflow-y", null);
 
         // Reset state
         // NOTE: commits[] is not reset 

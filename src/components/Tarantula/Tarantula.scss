@@ -11,6 +11,7 @@ $color-sliderrect: #0091ea;
  * Tarantula Component Rules
  * ========================================================================= */
 #tarantula {
+
     /* ============================================================================
     * Directory Actions and Commit Select
     ============================================================================ */
@@ -47,6 +48,8 @@ $color-sliderrect: #0091ea;
     #directoryContainer {
         background-color: $background-color-primary-light;
         box-shadow: $component-shadow;
+        display: block;
+        max-width: 550px;
         overflow-x: scroll;
         overflow-y: auto;
         margin-right: 12px;
@@ -83,7 +86,7 @@ $color-sliderrect: #0091ea;
         background-color: $background-color-tarantula;
         box-shadow: $component-shadow;
         display: flex;
-        overflow-x: scroll;
+        // overflow-x: scroll;
         margin-bottom: 12px;
     }
 
@@ -145,7 +148,7 @@ $color-sliderrect: #0091ea;
         background-color: $background-color-tarantula;
         box-shadow: $component-shadow;
         height: 512px;
-        overflow-y: scroll;
+        // overflow-y: scroll;
 
         table {
             display: block;

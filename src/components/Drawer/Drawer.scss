@@ -12,7 +12,7 @@ $drawer-icon-width: 108px;
  * ========================================================================= */
 #drawer {
     background-color: $background-color-drawer;
-    min-height: 100vh;
+    height: 100%;
     display: flex;
     flex-direction: column;
 
@@ -75,5 +75,26 @@ $drawer-icon-width: 108px;
 
     .fill {
         flex-grow: 1;
+    }
+}
+
+@media only screen and (max-width: 1024px) {
+    #drawer {
+        .drawerIcon { 
+            display: none;
+        }
+        .drawerTitle {
+            display: none;
+        }
+        .drawerNavigation {
+            margin-top: 0px;
+        }
+        .styledNavLink {
+            justify-content: center;
+            padding: 8px 0px;
+        }
+        .styledNavLink p.navText {
+            display: none;
+        }
     }
 }
