@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import {extractSourceNameFromRawGithubUrl, extractFileNameFromSourceName} from '../../util/file-name-parser';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
 import Suspiciousness from '../../models/Suspiciousness';
+import SuspiciousnessV2 from '../../models/SuspiciousnessV2';
 
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -17,6 +18,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 
 import { spidersenseWorkerUrls } from '../../vars/vars';
 import "./Tarantula.scss";
@@ -275,29 +277,38 @@ class Tarantula extends Component {
             /*
              * Get suspiciousness data from Suspiciousness module
              * Suspiciousness score object expected to be:
-             * {
+             * [{
              *     source: string,
              *     lines: [{
              *         suspiciousness: number,
              *         hsl: string,
              *         linenumber: number
              *     }, ...]
-             * }
+             * }, ...]
              */
+            let fileNames = this.state.allFiles.map((f) => {
+                return f.name;
+            });
+            let susp2 = new SuspiciousnessV2();
+            let output = susp2.computeSuspiciousness(response, fileNames);
+
+            /*
+            // Uncomment to use version 1 of Suspiciousness module
             let susp = new Suspiciousness(response);
-            let suspiciousnessScores = susp.suspiciousness();
-            console.log("Suspiciousness:\n" + JSON.stringify(suspiciousnessScores));
+            let output = susp.suspiciousness();
+            console.log("Suspiciousness:\n" + JSON.stringify(output));
+            */
 
             // Update state to retain scores
             this.setState((state) => ({
-                suspiciousness: suspiciousnessScores
+                suspiciousness: output
             }));
 
             // Display coverage on minimap
-            this.displayCoverageOnMinimap(suspiciousnessScores);
+            this.displayCoverageOnMinimap(output);
 
             // Display coverage on display view
-            this.displayCoverageOnDisplay(suspiciousnessScores);
+            this.displayCoverageOnDisplay(output);
 
         }).catch((error) => {
             console.error(error);
@@ -510,7 +521,6 @@ class Tarantula extends Component {
         let table = d3.select("#scrollContainer")
             .append("table")
             .attr('width', (this.TABLE_BODY_WIDTH - (this.SCROLL_CONTAINER_PADDING * 2)) + "px")
-            .style("overflow-y", "scroll");
         let tablebody = table
             .append("tbody");
 
@@ -535,7 +545,8 @@ class Tarantula extends Component {
         
         // Add padding to view
         d3.select("#scrollContainer")
-            .style("padding", this.SCROLL_CONTAINER_PADDING.toString() + "px");
+            .style("padding", this.SCROLL_CONTAINER_PADDING.toString() + "px")
+            .style("overflow-y", "scroll");
 
         // Update state scroll container height
         let scrollContainer = d3.select('#scrollContainer').node();
@@ -1045,7 +1056,7 @@ class Tarantula extends Component {
             .filter(n => n.checked)
             .map(n => n.getAttribute("key"));
 
-        // TODO: Prepare data for the details
+        // Prepare data for the details
         let detailsArr = [
             {
                 title: "File:",
@@ -1056,21 +1067,21 @@ class Tarantula extends Component {
                 value: activatedTestCases.length
             },
             {
-                title: "Passed:",
-                value: 0
+                title: "%p:",
+                value: lineObj.pRatio
             },
             {
-                title: "Total Passed:",
-                value: 0
+                title: "%f:",
+                value: lineObj.fRatio
             },
-            {
-                title: "Failed:",
-                value: 0
-            },
-            {
-                title: "Total Failed:",
-                value: 0
-            }
+            // {
+            //     title: "Total Passed:",
+            //     value: 0
+            // },
+            // {
+            //     title: "Total Failed:",
+            //     value: 0
+            // }
         ];
 
         let containers = d3.select("#dialogSuspContainer")
@@ -1521,6 +1532,16 @@ class Tarantula extends Component {
                     fullWidth={true}
                     maxWidth="sm">
                     <DialogTitle id="suspDialogTitle">Line Details</DialogTitle>
+                    <div id="dialogSuspHelp">
+                        <div className="tooltip">
+                            <HelpOutlineIcon />
+                            <span className="tooltiptext">
+                                <p><b>%p</b>: A ratio representing the number of passed test cases that executed the statement one or more times over the number of activated test cases that passed.</p>
+                                <br/>
+                                <p><b>%f</b>: A ratio representing the number of failed test cases that executed the statement one or more times over the number of activated test cases that failed.</p>
+                            </span>
+                        </div>
+                    </div>
                     <DialogContent>
                         <div id="dialogSuspContainer"></div>
                     </DialogContent>

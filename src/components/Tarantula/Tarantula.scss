@@ -243,6 +243,13 @@ $color-sliderrect: #0091ea;
         white-space: pre;
     }
 }
+#dialogSuspHelp {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 0px 24px;
+}
 #dialogSuspContainer {
     > div {
         display: flex;
