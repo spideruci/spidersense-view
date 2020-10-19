@@ -41,7 +41,7 @@ function convertTimestampToDate(timestamp) {
     const month = dateArray[1];
     const day = dateArray[2];
 
-    let date = new Date(year, month, day);
+    let date = new Date(year, month - 1, day);
 
     const monthsReference = [
         "January", "February", "March", "April", "May", "June", "July",
