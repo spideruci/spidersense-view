@@ -102,6 +102,9 @@ class Tarantula extends Component {
     } 
 
     componentDidMount() {
+        if (this.state.commits.length !== 0) {
+            this.onSelectCommitChanged(this.state.commits[0].commitId);
+        }
     }
 
     /** =======================================================================
@@ -1201,17 +1204,17 @@ class Tarantula extends Component {
      * component and remove generated DOM nodes.
      * @param {Object} event The event that triggered the callback
      */
-    onSelectCommitChanged(event) {
-        let sha = event.target.value;
+    onSelectCommitChanged(commitId) {
+        // let sha = event.target.value;
 
         // Reset only if newly selected sha is different from previous sha
-        if (this.state.selectedCommit !== sha) {
+        if (this.state.selectedCommit !== commitId) {
             this.resetComponent();
         }
 
         // Update state for the selected commit/sha
         this.setState((state) => ({
-            selectedCommit: sha,
+            selectedCommit: commitId,
             // Show progress
             isRequestingFromWorker: true
         }));
@@ -1220,7 +1223,7 @@ class Tarantula extends Component {
         this.setButtonGroupDisabled(false);
         
         // Request urls to the source files for current commit
-        this.requestSourceLinks(sha);
+        this.requestSourceLinks(commitId);
     }
 
     /**
@@ -1471,7 +1474,7 @@ class Tarantula extends Component {
                                 labelId="simpleSelectLabelCommit"
                                 id="selectCommit"
                                 value={this.state.selectedCommit}
-                                onChange={this.onSelectCommitChanged}
+                                onChange={e => this.onSelectCommitChanged(e.target.value)}
                             >
                                 {
                                     this.state.commits.map((c) => (
