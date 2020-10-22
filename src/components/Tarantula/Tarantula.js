@@ -258,64 +258,57 @@ class Tarantula extends Component {
         if (activatedTestCases.length === 0) {
             return;
         }
-        
-        // Map test ids to server url
-        let urls = activatedTestCases.map((t) => {
-            return `${spidersenseWorkerUrls.testcaseCoverage}${t.toString()}`;
-        });
 
         console.log("Activated tests: " + activatedTestCases);
-        console.log("Urls: " + urls);
+        let tests = '';
+        activatedTestCases.forEach(t => tests += t + ',')
+        tests = tests.slice(0, tests.length - 1)
+        console.log(tests);
 
-        // Make the request for all activated test cases (liveness)
-        Promise.all(urls.map((req) => {
-            return fetch(req).then((response) => {
-                return response.json();
-            })
-            .then((data) => {
-                return data;
-            });
-        })).then((response) => {
-            // console.log('Callback:\n' + JSON.stringify(response));
-            /*
-             * Get suspiciousness data from Suspiciousness module
-             * Suspiciousness score object expected to be:
-             * [{
-             *     source: string,
-             *     lines: [{
-             *         suspiciousness: number,
-             *         hsl: string,
-             *         linenumber: number
-             *     }, ...]
-             * }, ...]
-             */
-            let fileNames = this.state.allFiles.map((f) => {
-                return f.name;
-            });
-            let susp2 = new SuspiciousnessV2();
-            let output = susp2.computeSuspiciousness(response, fileNames);
+        var formdata = new FormData();
+        formdata.append("tlist", tests);
 
-            /*
-            // Uncomment to use version 1 of Suspiciousness module
-            let susp = new Suspiciousness(response);
-            let output = susp.suspiciousness();
-            console.log("Suspiciousness:\n" + JSON.stringify(output));
-            */
+        var requestOptions = {
+            method: 'POST',
+            body: formdata,
+            redirect: 'follow'
+        };
 
-            // Update state to retain scores
-            this.setState((state) => ({
-                suspiciousness: output
-            }));
+        fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
+            .then(response => response.json())
+            .then(result => {
+                let tests = []
+                activatedTestCases.forEach(e => {
+                    const key = 't' + e
+                    tests.push({
+                        testcases: result[key]
+                    })
+                })
 
-            // Display coverage on minimap
-            this.displayCoverageOnMinimap(output);
+                let fileNames = this.state.allFiles.map((f) => {
+                    return f.name;
+                });
+                let susp2 = new SuspiciousnessV2();
+                let output = susp2.computeSuspiciousness(tests, fileNames);
 
-            // Display coverage on display view
-            this.displayCoverageOnDisplay(output);
+                /*
+                // Uncomment to use version 1 of Suspiciousness module
+                let susp = new Suspiciousness(response);
+                let output = susp.suspiciousness();
+                console.log("Suspiciousness:\n" + JSON.stringify(output));
+                */
 
-        }).catch((error) => {
-            console.error(error);
-        });
+                // Update state to retain scores
+                this.setState((state) => ({
+                    suspiciousness: output
+                }));
+
+                // Display coverage on minimap
+                this.displayCoverageOnMinimap(output);
+
+                // Display coverage on display view
+                this.displayCoverageOnDisplay(output);
+            }).catch(error => console.log('error', error));
     }
     
     /** =======================================================================

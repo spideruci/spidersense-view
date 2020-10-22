@@ -10,6 +10,7 @@ const spidersenseWorkerUrls = {
     getSourceInfo: "http://127.0.0.1:5000/getSourceInfo/",      // Param: <commitId>
     getAllTestcases: "http://127.0.01:5000/getAllTestcases/",    // Param: <commitId>
     testcaseCoverage: "http://127.0.0.1:5000/testcaseCoverage/", // Param: <testcaseId>
+    batchTestcaseCoverage: "http://127.0.0.1:5000/batchTestcaseCoverage", // Body: {tlist: '12345,12346'}
     commitCoverage: "http://127.0.0.1:5000/commitCoverage/"     // Param: <testcaseId>
 };
 export {spidersenseWorkerUrls};
