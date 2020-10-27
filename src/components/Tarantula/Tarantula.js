@@ -6,12 +6,14 @@ import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMe
 import Suspiciousness from '../../models/Suspiciousness';
 import SuspiciousnessV2 from '../../models/SuspiciousnessV2';
 
+import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Button from '@material-ui/core/Button';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
+import Icon from '@material-ui/core/Icon';
 import IconButton from '@material-ui/core/IconButton';
 import PageviewIcon from '@material-ui/icons/Pageview';
 import Dialog from '@material-ui/core/Dialog';
@@ -24,6 +26,7 @@ import { spidersenseWorkerUrls } from '../../vars/vars';
 import "./Tarantula.scss";
 import "./MaterialCheckbox.css";
 import "./Tooltip.css";
+
 
 class Tarantula extends Component {
     commitWrapper = createRef();
@@ -76,6 +79,7 @@ class Tarantula extends Component {
         this.TABLE_BODY_WIDTH = 700;           // Width of display scroll container table
         this.SCROLL_FONT_SIZE = 12;            // Font size of td element 
         this.SCROLL_CONTAINER_PADDING = 12;    // Padding of display scroll container
+        this.SUBMIT_MARGIN = 120;
 
         // const SCROLL_CONTAINER_HEIGHT = 512;
         // this.DIRECTORY_HEIGHT = this.SVG_MAX_HEIGHT + 16 + 12 + 14 + SCROLL_CONTAINER_HEIGHT;
@@ -486,10 +490,7 @@ class Tarantula extends Component {
                 this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
             });
         d3.selectAll(".testcase input")
-            .on('click', () => {
-                // this.onTestCaseChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
-                this.onTestCaseChecked();
-            });
+            .on('click');
     }
 
     /** =======================================================================
@@ -1246,9 +1247,6 @@ class Tarantula extends Component {
                 return testcases.includes(d3.select(this).attr("key"));
             })
             .property("checked", checked);
-
-        // Request coverage data
-        this.requestCoverage();
     }
 
     /**
@@ -1256,8 +1254,7 @@ class Tarantula extends Component {
      * Loads coverage data for test case.
      */
     onTestCaseChecked() {
-        // Request coverage data
-        this.requestCoverage();
+
     }
 
     /**
@@ -1327,9 +1324,6 @@ class Tarantula extends Component {
         d3.selectAll(".testcase")
             .select("input")
             .property("checked", checkAll);
-
-        // Request coverage data
-        this.requestCoverage();
     }
 
     /**
@@ -1372,9 +1366,6 @@ class Tarantula extends Component {
                 return !testcaseIds.includes(d3.select(this).attr("key"));
             })
             .property("checked", false);;
-
-        // Request coverage data
-        this.requestCoverage();
     }
 
     /**
@@ -1450,6 +1441,14 @@ class Tarantula extends Component {
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
                         </ButtonGroup>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            style={{ marginLeft: this.SUBMIT_MARGIN }}
+                            onClick={() => this.requestCoverage()}
+                        >
+                            Submit
+                        </Button>
                     </div>
 
                     <div>
