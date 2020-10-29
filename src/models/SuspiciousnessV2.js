@@ -155,8 +155,8 @@ class SuspiciousnessV2 {
                 let percentF = (failedMap.has(lineNumber)) ? failedMap.get(lineNumber) : 0;
                 // For lines in passedMap that don't have a matching lineNumber in the failedMap,
                 // score would be calculated as %p / (%p + %f) = %p / (%p + 0) = 1
-                let score = Math.round(percentP / (percentP + percentF));
-                let suspiciousness = 1 - score;
+                let score = percentP / (percentP + percentF);
+                let suspiciousness = 1 - score.toFixed(2);
                 let hue = DEFAULT_HUE * score;
                 let brightness = DEFAULT_BRIGHTNESS * Math.max(percentF, percentP);
 
