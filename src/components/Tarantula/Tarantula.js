@@ -291,7 +291,6 @@ class Tarantula extends Component {
             });
             let susp2 = new SuspiciousnessV2();
             let output = susp2.computeSuspiciousness(response, fileNames);
-
             /*
             // Uncomment to use version 1 of Suspiciousness module
             let susp = new Suspiciousness(response);
@@ -1047,8 +1046,8 @@ class Tarantula extends Component {
             return <p>An error occurred</p>;
         }
         let score = scoresArr[0];
+        score.lines = score.lines.sort((a, b) => a.linenumber - b.linenumber)
         let lineObj = score.lines[coverableIndex];
-
         // Get the test ids of the activated (checked) tests 
         let activatedTestCases = d3.selectAll(".testcase")
             .select("input")
