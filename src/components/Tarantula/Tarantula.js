@@ -873,7 +873,7 @@ class Tarantula extends Component {
             return;
         }
         let score = scoresArr[0];
-
+        score.lines = score.lines.sort((a, b) => a.linenumber - b.linenumber)
         // Obtain list of tr nodes 
         let rows = d3.select("#scrollContainer")
             .select("table")
