@@ -36,7 +36,7 @@ class SuspiciousnessV2 {
         });
         let numberOfTestcasesPassed = passedTestcases.length;
         let numberOfTestcasesFailed = failedTestcases.length;
-        
+
         let passedFileNames = {};
         for (let f of fileNames) {
             passedFileNames[f] = new Map();
@@ -54,21 +54,6 @@ class SuspiciousnessV2 {
         this.calculateRatios(failedFileNames, numberOfTestcasesFailed);
 
         let output = this.calculateScores(passedFileNames, failedFileNames, fileNames);
-
-        // console.log("passedTestcases: " + JSON.stringify(passedTestcases) +
-        // "\nfailedTestcases: " + failedTestcases +
-        // "\nnumberOfTestcasesPassed: " + numberOfTestcasesPassed + 
-        // "\nnumberOfTestcasesFailed: " + numberOfTestcasesFailed + 
-        // "\npassedFileNames: " + JSON.stringify(passedFileNames) +
-        // "\nfailedFileNames: " + JSON.stringify(failedFileNames));
-
-        // for (let k of Object.keys(output)) {
-        //     let map = output[k];
-        //     console.log("**** File: " + k + " ****");
-        //     for (let [key, val] of map.entries()) {
-        //         console.log("Key: " + key + " Val: " + JSON.stringify(val));
-        //     }
-        // }
 
         return output;
     }
@@ -137,7 +122,7 @@ class SuspiciousnessV2 {
     calculateScores(passedFileNames, failedFileNames, fileNames) {
         const DEFAULT_HUE = 120;
         const DEFAULT_SATURATION = 100;
-        const DEFAULT_LIGHTNESS = 50;
+        const DEFAULT_BRIGHTNESS = 50;
 
         // let output = {};
         let output = [];
@@ -152,21 +137,39 @@ class SuspiciousnessV2 {
             let passedMap = passedFileNames[f];
             let failedMap = failedFileNames[f];
 
+            function hsv2hsl(hue, sat, val) {
+                return [ //[hue, saturation, lightness] 
+                    //Range should be between 0 - 1 
+                    hue, //Hue stays the same 
+                    //Saturation is very different between the two color spaces 
+                    //If (2-sat)*val < 1 set it to sat*val/((2-sat)*val) 
+                    //Otherwise sat*val/(2-(2-sat)*val) 
+                    //Conditional is not operating with hue, it is reassigned! 
+                    sat * val / ((hue = (2 - sat) * val) < 1 ? hue : 2 - hue),
+                    hue / 2 //Lightness is (2-sat)*val/2 
+                    //See reassignment of hue above 
+                ]
+            }
+            
             for (let [lineNumber, percentP] of passedMap.entries()) {
                 let percentF = (failedMap.has(lineNumber)) ? failedMap.get(lineNumber) : 0;
-
                 // For lines in passedMap that don't have a matching lineNumber in the failedMap,
                 // score would be calculated as %p / (%p + %f) = %p / (%p + 0) = 1
                 let score = Math.round(percentP / (percentP + percentF));
                 let suspiciousness = 1 - score;
                 let hue = DEFAULT_HUE * score;
-                let lightness = DEFAULT_LIGHTNESS * Math.max(percentF, percentP);
+                let brightness = DEFAULT_BRIGHTNESS * Math.max(percentF, percentP);
+
+                var res = hsv2hsl(hue, DEFAULT_SATURATION / 100, brightness / 100);
+                hue = res[0]
+                let sat = res[1] * 100
+                let lightness = res[2] * 100
 
                 finalMap.set(lineNumber, {
                     suspiciousness: suspiciousness,
                     pRatio: percentP,
                     fRatio: percentF,
-                    hsl: `hsl(${hue}, ${DEFAULT_SATURATION}%, ${lightness}%)`,
+                    hsl: `hsl(${hue}, ${sat}%, ${lightness}%)`,
                     linenumber: lineNumber
                 });
             }
@@ -181,13 +184,18 @@ class SuspiciousnessV2 {
                 let score = 0;
                 let suspiciousness = 1 - score;
                 let hue = DEFAULT_HUE * score;
-                let lightness = DEFAULT_LIGHTNESS * percentF;
+                let brightness = DEFAULT_BRIGHTNESS * percentF;
+
+                var res = hsv2hsl(hue, DEFAULT_SATURATION / 100.0, brightness / 100.0);
+                hue = res[0]
+                let sat = res[1] * 100
+                let lightness = res[2] * 100
 
                 finalMap.set(lineNumber, {
                     suspiciousness: suspiciousness,
                     pRatio: 0,
                     fRatio: percentF,
-                    hsl: `hsl(${hue}, ${DEFAULT_SATURATION}%, ${lightness}%)`,
+                    hsl: `hsl(${hue}, ${sat}%, ${lightness}%)`,
                     linenumber: lineNumber
                 });
             }
