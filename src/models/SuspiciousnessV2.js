@@ -122,7 +122,7 @@ class SuspiciousnessV2 {
     calculateScores(passedFileNames, failedFileNames, fileNames) {
         const DEFAULT_HUE = 120;
         const DEFAULT_SATURATION = 100;
-        const DEFAULT_BRIGHTNESS = 50;
+        const DEFAULT_BRIGHTNESS = 100;
 
         // let output = {};
         let output = [];
