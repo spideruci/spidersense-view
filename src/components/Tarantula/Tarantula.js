@@ -15,7 +15,9 @@ import Button from '@material-ui/core/Button';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Icon from '@material-ui/core/Icon';
 import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
 import PageviewIcon from '@material-ui/icons/Pageview';
+import CodeIcon from '@material-ui/icons/Code';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -71,6 +73,7 @@ class Tarantula extends Component {
 
         // Constants
         this.FONT_SIZE = 1;            // Font size for svg text
+        this.BATCH_SIZE = 100;         // Batch size to retrieve test coverage data
         this.Y_TEXT_PADDING = 1;       // Top padding for each tspan
         this.SVG_WIDTH = 48;           // Width of each minimap
         this.SVG_MAX_HEIGHT = 300;     // Height of each minimap
@@ -264,55 +267,67 @@ class Tarantula extends Component {
         }
 
         console.log("Activated tests: " + activatedTestCases);
-        let tests = '';
-        activatedTestCases.forEach(t => tests += t + ',')
-        tests = tests.slice(0, tests.length - 1)
+        let tests = []
+        let currentBatch = ''
+        activatedTestCases.forEach((t, i) => {
+            currentBatch += t + ','
+            if (i !== 0 && i % this.BATCH_SIZE === 0) {
+                tests.push(currentBatch.slice(0, currentBatch.length - 1))
+                currentBatch = ''
+            }
+        })
+        if (currentBatch !== '') {
+            tests.push(currentBatch.slice(0, currentBatch.length - 1))
+        }
         console.log(tests);
 
-        var formdata = new FormData();
-        formdata.append("tlist", tests);
-
-        var requestOptions = {
-            method: 'POST',
-            body: formdata,
-            redirect: 'follow'
-        };
-
-        fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
-            .then(response => response.json())
-            .then(result => {
-                let tests = []
-                activatedTestCases.forEach(e => {
-                    const key = 't' + e
-                    tests.push({
-                        testcases: result[key]
+        tests.forEach(test => {
+            var formdata = new FormData();
+            formdata.append("tlist", test);
+    
+            var requestOptions = {
+                method: 'POST',
+                body: formdata,
+                redirect: 'follow'
+            };
+    
+            fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    let tests = test.split(',')
+                    let formatedTests = []
+                    tests.forEach(e => {
+                        const key = 't' + e
+                        formatedTests.push({
+                            testcases: result[key]
+                        })
                     })
-                })
-
-                let fileNames = this.state.allFiles.map((f) => {
-                    return f.name;
-                });
-                let susp2 = new SuspiciousnessV2();
-                let output = susp2.computeSuspiciousness(tests, fileNames);
-
-                /*
-                // Uncomment to use version 1 of Suspiciousness module
-                let susp = new Suspiciousness(response);
-                let output = susp.suspiciousness();
-                console.log("Suspiciousness:\n" + JSON.stringify(output));
-                */
-
-                // Update state to retain scores
-                this.setState((state) => ({
-                    suspiciousness: output
-                }));
-
-                // Display coverage on minimap
-                this.displayCoverageOnMinimap(output);
-
-                // Display coverage on display view
-                this.displayCoverageOnDisplay(output);
-            }).catch(error => console.log('error', error));
+    
+                    let fileNames = this.state.allFiles.map((f) => {
+                        return f.name;
+                    });
+                    let susp2 = new SuspiciousnessV2();
+                    let output = susp2.computeSuspiciousness(formatedTests, fileNames);
+    
+                    /*
+                    // Uncomment to use version 1 of Suspiciousness module
+                    let susp = new Suspiciousness(response);
+                    let output = susp.suspiciousness();
+                    console.log("Suspiciousness:\n" + JSON.stringify(output));
+                    */
+    
+                    // Update state to retain scores
+                    this.setState((state) => ({
+                        suspiciousness: output
+                    }));
+    
+                    // Display coverage on minimap
+                    this.displayCoverageOnMinimap(output);
+    
+                    // Display coverage on display view
+                    this.displayCoverageOnDisplay(output);
+                }).catch(error => console.log('error', error));
+        })        
     }
     
     /** =======================================================================
@@ -1441,22 +1456,27 @@ class Tarantula extends Component {
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
                         </ButtonGroup>
-                        <Button
+                        <Tooltip title="get coverage">
+                            <Button
                             variant="contained"
                             color="primary"
                             style={{ marginLeft: this.SUBMIT_MARGIN }}
                             onClick={() => this.requestCoverage()}
-                        >
+                            >
                             Submit
                         </Button>
+                        </Tooltip>
+                        
                     </div>
 
                     <div>
-                        <IconButton aria-label="view scores" color="primary" 
-                            disabled={this.state.isViewScoresDisabled}
-                            onClick={this.onViewScoresClicked}>
-                            <PageviewIcon />
-                        </IconButton>
+                        <Tooltip title="view score">
+                            <IconButton aria-label="view scores" color="primary" 
+                                disabled={this.state.isViewScoresDisabled}
+                                onClick={this.onViewScoresClicked}>
+                                <CodeIcon />
+                            </IconButton>
+                        </Tooltip>
                     </div>
 
                     <div ref={this.commitWrapper}>
