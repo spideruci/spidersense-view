@@ -115,8 +115,7 @@ class Project extends React.Component {
             console.log("Callback:\n" + JSON.stringify(data));
 
             // Initialize the tabs
-            this.initializeTabs(data.builds);
-
+            this.initializeTabs(data.builds.sort((a,b)=>Date.parse(b.timestamp) - Date.parse(a.timestamp)));
             this.closeBackdrop();
         }).catch((error) => {
             console.error(error);
