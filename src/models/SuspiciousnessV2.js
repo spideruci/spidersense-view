@@ -159,8 +159,7 @@ class SuspiciousnessV2 {
                 let suspiciousness = 1 - score.toFixed(2);
                 let hue = DEFAULT_HUE * score;
                 let brightness = DEFAULT_BRIGHTNESS * Math.max(percentF, percentP);
-
-                var res = hsv2hsl(hue, DEFAULT_SATURATION / 100, brightness / 100);
+                var res = hsv2hsl(hue, DEFAULT_SATURATION / 100, (brightness * 0.85 + 15) / 100);
                 hue = res[0]
                 let sat = res[1] * 100
                 let lightness = res[2] * 100
@@ -185,8 +184,7 @@ class SuspiciousnessV2 {
                 let suspiciousness = 1 - score;
                 let hue = DEFAULT_HUE * score;
                 let brightness = DEFAULT_BRIGHTNESS * percentF;
-
-                var res = hsv2hsl(hue, DEFAULT_SATURATION / 100.0, brightness / 100.0);
+                var res = hsv2hsl(hue, DEFAULT_SATURATION / 100.0, (brightness * 0.85 + 15) / 100);
                 hue = res[0]
                 let sat = res[1] * 100
                 let lightness = res[2] * 100
