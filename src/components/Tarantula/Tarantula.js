@@ -273,9 +273,9 @@ class Tarantula extends Component {
             tests.push(currentBatch.slice(0, currentBatch.length - 1))
         }
         // console.log(tests);
-        // this.setState((state) => ({
-        //     isRequestingCoverage: true
-        // }));
+        this.setState((state) => ({
+            isRequestingCoverage: true
+        }));
         
         Promise.all(tests.map((batch) => {
             var formdata = new FormData();
@@ -319,9 +319,9 @@ class Tarantula extends Component {
             }));
         })
         .then((res)=> {
-            // this.setState((state) => ({
-            //     isRequestingCoverage: false
-            // }));
+            this.setState((state) => ({
+                isRequestingCoverage: false
+            }));
         })
         .catch((error) => {
             console.error(error);
