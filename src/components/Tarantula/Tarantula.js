@@ -5,6 +5,7 @@ import {extractSourceNameFromRawGithubUrl, extractFileNameFromSourceName} from '
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
 import Suspiciousness from '../../models/Suspiciousness';
 import SuspiciousnessV2 from '../../models/SuspiciousnessV2';
+import LinearDeterminate from './LinearDeterminate'
 
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -68,12 +69,14 @@ class Tarantula extends Component {
             isRequestingFromWorker: false,
             isDialogOpened: false,
             isSuspDialogOpened: false,
-            coverableIndex: -1
+            coverableIndex: -1,
+            isRequestingCoverage: false,
+            allFormatedTestsMap: []
         };
 
         // Constants
         this.FONT_SIZE = 1;            // Font size for svg text
-        this.BATCH_SIZE = 100;         // Batch size to retrieve test coverage data
+        this.BATCH_SIZE = 100;
         this.Y_TEXT_PADDING = 1;       // Top padding for each tspan
         this.SVG_WIDTH = 48;           // Width of each minimap
         this.SVG_MAX_HEIGHT = 300;     // Height of each minimap
@@ -97,6 +100,8 @@ class Tarantula extends Component {
         this.generateSlider = this.generateSlider.bind(this);
         this.generateDisplay = this.generateDisplay.bind(this);
         this.requestCoverage = this.requestCoverage.bind(this);
+        this.requestAllCoverage = this.requestAllCoverage.bind(this);
+        this.requestCoverage2 = this.requestCoverage.bind(this);
         this.displayCoverageOnMinimap = this.displayCoverageOnMinimap.bind(this);
         this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
 
@@ -230,7 +235,7 @@ class Tarantula extends Component {
             // console.log("Callback:\n" + JSON.stringify(data));
 
             this.generateDirectoryView(data);
-
+            this.requestAllCoverage();
             this.setState((state) => ({
                 isRequestingFromWorker: false
             }));
@@ -242,6 +247,86 @@ class Tarantula extends Component {
         });
     }
 
+    requestAllCoverage() {
+        // Get the test ids of activated (checked) tests 
+        let activatedTestCases = d3.selectAll(".testcase")
+            .select("input")
+            .nodes()
+            .map(n => n.getAttribute("key"));
+
+        // Return if there are no activated test cases
+        if (activatedTestCases.length === 0) {
+            return;
+        }
+    
+        // console.log("Activated tests: " + activatedTestCases);
+        let tests = []
+        let currentBatch = ''
+        activatedTestCases.forEach((t, i) => {
+            if (i !== 0 && i % this.BATCH_SIZE === 0) {
+                tests.push(currentBatch.slice(0, currentBatch.length - 1))
+                currentBatch = ''
+            }
+            currentBatch += t + ','
+        })
+        if (currentBatch !== '') {
+            tests.push(currentBatch.slice(0, currentBatch.length - 1))
+        }
+        // console.log(tests);
+        this.setState((state) => ({
+            isRequestingCoverage: true
+        }));
+        
+        Promise.all(tests.map((batch) => {
+            var formdata = new FormData();
+            formdata.append("tlist", batch);
+            var requestOptions = {
+                method: 'POST',
+                body: formdata,
+                redirect: 'follow'
+            };            
+            return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
+            .then(response => {
+                return response.json();
+            })
+            // .then((data) => {
+            //     return data;
+            // });
+        })).then(responses => {
+            let suspiciousnessScores = [];
+            let formatedTests = [];
+            let allFormatedTests = {};
+            for (let i = 0; i < responses.length; i++) {
+                let result = responses[i]
+                // console.log(result)
+                let testList = tests[i].split(',')
+                formatedTests = testList.map(e => {
+                    allFormatedTests['t' + e] = {testcases: result['t' + e]};
+                    return {testcases: result['t' + e]};
+                })
+                // console.log(testList)
+                let fileNames = this.state.allFiles.map((f) => {
+                    return f.name;
+                });
+                let susp2 = new SuspiciousnessV2();
+                let output = susp2.computeSuspiciousness(formatedTests, fileNames);
+                suspiciousnessScores = suspiciousnessScores.concat(...output)
+            }
+            // Update state to retain scores
+            console.log(allFormatedTests)
+            this.setState((state) => ({
+                allFormatedTestsMap: allFormatedTests
+            }));
+        })
+        .then((res)=> {
+            this.setState((state) => ({
+                isRequestingCoverage: false
+            }));
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+    }
     /**
      * Request from spidersense-worker test coverage data for each testcase id that 
      * was checked in the directory view. Remove existing testcases and disable the
@@ -249,7 +334,7 @@ class Tarantula extends Component {
      * suspiciousness scores, update state to retain scores, and display coverage
      * on minimap and display view.
      */
-    requestCoverage() {
+    requestCoverage2() {
         this.removeExistingCoverage();
 
         this.setViewScoresDisabled();
@@ -270,64 +355,105 @@ class Tarantula extends Component {
         let tests = []
         let currentBatch = ''
         activatedTestCases.forEach((t, i) => {
-            currentBatch += t + ','
             if (i !== 0 && i % this.BATCH_SIZE === 0) {
                 tests.push(currentBatch.slice(0, currentBatch.length - 1))
                 currentBatch = ''
             }
+            currentBatch += t + ','
         })
         if (currentBatch !== '') {
             tests.push(currentBatch.slice(0, currentBatch.length - 1))
         }
-        console.log(tests);
-
-        tests.forEach(test => {
+        // console.log(tests);
+        this.setState((state) => ({
+            isRequestingCoverage: true
+        }));
+        Promise.all(tests.map((batch) => {
             var formdata = new FormData();
-            formdata.append("tlist", test);
-    
+            formdata.append("tlist", batch);
             var requestOptions = {
                 method: 'POST',
                 body: formdata,
                 redirect: 'follow'
-            };
+            };            
+            return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
+            .then(response => {
+                return response.json();
+            })
+            // .then((data) => {
+            //     return data;
+            // });
+        })).then(responses => {
+            let suspiciousnessScores = []
+            for (let i = 0; i < responses.length; i++) {
+                let result = responses[i]
+                // console.log(result)
+                let testList = tests[i].split(',')
+                let formatedTests = testList.map(e => {
+                   return {testcases: result['t' + e]}
+                })
+                // console.log(testList)
+                let fileNames = this.state.allFiles.map((f) => {
+                    return f.name;
+                });
+                let susp2 = new SuspiciousnessV2();
+                let output = susp2.computeSuspiciousness(formatedTests, fileNames);
+                suspiciousnessScores = suspiciousnessScores.concat(...output)
+            }
+            console.log(suspiciousnessScores)
+            // Update state to retain scores
+            this.setState((state) => ({
+                suspiciousness: suspiciousnessScores
+            }));
+            // Display coverage on minimap
+            this.displayCoverageOnMinimap(suspiciousnessScores);
+
+            // Display coverage on display view
+            this.displayCoverageOnDisplay(suspiciousnessScores);    
+        })
+        .then((res)=> {
+            this.setState((state) => ({
+                isRequestingCoverage: false
+            }));
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+    }
+    requestCoverage() {
+        this.removeExistingCoverage();
     
-            fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
-                .then(response => response.json())
-                .then(result => {
-                    let tests = test.split(',')
-                    let formatedTests = []
-                    tests.forEach(e => {
-                        const key = 't' + e
-                        formatedTests.push({
-                            testcases: result[key]
-                        })
-                    })
+        this.setViewScoresDisabled();
     
-                    let fileNames = this.state.allFiles.map((f) => {
-                        return f.name;
-                    });
-                    let susp2 = new SuspiciousnessV2();
-                    let output = susp2.computeSuspiciousness(formatedTests, fileNames);
+        // Get the test ids of activated (checked) tests 
+        let activatedTestCases = d3.selectAll(".testcase")
+            .select("input")
+            .nodes()
+            .filter(n => n.checked)
+            .map(n => n.getAttribute("key"));
     
-                    /*
-                    // Uncomment to use version 1 of Suspiciousness module
-                    let susp = new Suspiciousness(response);
-                    let output = susp.suspiciousness();
-                    console.log("Suspiciousness:\n" + JSON.stringify(output));
-                    */
+        // Return if there are no activated test cases
+        if (activatedTestCases.length === 0) {
+            return;
+        }
     
-                    // Update state to retain scores
-                    this.setState((state) => ({
-                        suspiciousness: output
-                    }));
+        // console.log("Activated tests: " + activatedTestCases);
+        let formatedTests = activatedTestCases.map((key)=> this.state.allFormatedTestsMap['t' + key]);
+        let susp2 = new SuspiciousnessV2();
+        let fileNames = this.state.allFiles.map((f) => {
+            return f.name;
+        });
+        let output = susp2.computeSuspiciousness(formatedTests, fileNames);
+        console.log(output)
+        // Update state to retain scores
+        this.setState((state) => ({
+            suspiciousness: output
+        }));
+        // Display coverage on minimap
+        this.displayCoverageOnMinimap(output);
     
-                    // Display coverage on minimap
-                    this.displayCoverageOnMinimap(output);
-    
-                    // Display coverage on display view
-                    this.displayCoverageOnDisplay(output);
-                }).catch(error => console.log('error', error));
-        })        
+        // Display coverage on display view
+        this.displayCoverageOnDisplay(output);
     }
     
     /** =======================================================================
@@ -865,7 +991,7 @@ class Tarantula extends Component {
      * For the currently selected file determined by the selection index, 
      * highlight lines of selected file based on suspiciousness data.
      */
-    displayCoverageOnDisplay() {
+    displayCoverageOnDisplay(input) {
         // Return if no file container was selected
         if (this.state.selectionIndex === -1) {
             // console.log("No file containers were selected");
@@ -877,8 +1003,13 @@ class Tarantula extends Component {
 
         // Get file name for selected file container and suspiciousness scores
         let fileName = this.state.allFiles[this.state.selectionIndex].name;
-        let suspiciousnessScores = this.state.suspiciousness;
-
+        let suspiciousnessScores;
+        if (input === undefined) {
+            suspiciousnessScores = this.state.suspiciousness;
+        } else {
+            suspiciousnessScores = input;
+        }
+        
         // Filter appropriate score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
             return s.source === fileName;
@@ -1458,15 +1589,14 @@ class Tarantula extends Component {
                         </ButtonGroup>
                         <Tooltip title="get coverage">
                             <Button
-                            variant="contained"
-                            color="primary"
-                            style={{ marginLeft: this.SUBMIT_MARGIN }}
-                            onClick={() => this.requestCoverage()}
+                                variant="contained"
+                                color="primary"
+                                style={{ marginLeft: this.SUBMIT_MARGIN }}
+                                onClick={() => this.requestCoverage()}
                             >
-                            Submit
-                        </Button>
+                                Submit
+                            </Button>
                         </Tooltip>
-                        
                     </div>
 
                     <div>
@@ -1515,7 +1645,13 @@ class Tarantula extends Component {
                     <div id="directoryContainer"></div>
 
                     <div id="visualizationWrapper">
-                        <div id="horizontalScrollView"></div> 
+                        <div id="horizontalScrollView"></div>                      
+                        {
+                            this.state.isRequestingCoverage &&
+                            <div id="linearProgress">
+                                <LinearDeterminate />
+                            </div>
+                        }
                         <div id="scrollContainer"></div>
                     </div>
                     {
