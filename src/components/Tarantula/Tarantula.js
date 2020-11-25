@@ -59,6 +59,8 @@ class Tarantula extends Component {
 
             // Active test cases
             testcases: [],
+            totalBatches: -1,
+            retrievedBatches: 0,
 
             // Fault localization
             suspiciousness: [],
@@ -249,20 +251,20 @@ class Tarantula extends Component {
 
     requestAllCoverage() {
         // Get the test ids of activated (checked) tests 
-        let activatedTestCases = d3.selectAll(".testcase")
+        let allTestCases = d3.selectAll(".testcase")
             .select("input")
             .nodes()
             .map(n => n.getAttribute("key"));
 
         // Return if there are no activated test cases
-        if (activatedTestCases.length === 0) {
+        if (allTestCases.length === 0) {
             return;
         }
     
         // console.log("Activated tests: " + activatedTestCases);
         let tests = []
         let currentBatch = ''
-        activatedTestCases.forEach((t, i) => {
+        allTestCases.forEach((t, i) => {
             if (i !== 0 && i % this.BATCH_SIZE === 0) {
                 tests.push(currentBatch.slice(0, currentBatch.length - 1))
                 currentBatch = ''
@@ -274,7 +276,8 @@ class Tarantula extends Component {
         }
         // console.log(tests);
         this.setState((state) => ({
-            isRequestingCoverage: true
+            isRequestingCoverage: true,
+            totalBatches: tests.length
         }));
         
         Promise.all(tests.map((batch) => {
@@ -287,6 +290,10 @@ class Tarantula extends Component {
             };            
             return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
             .then(response => {
+                this.setState((state) => ({
+                    retrievedBatches: state.retrievedBatches + 1 
+                }))
+                console.log("download percentage: " + (this.state.retrievedBatches / this.state.totalBatches) * 100 + "%");
                 return response.json();
             })
             // .then((data) => {
@@ -313,9 +320,9 @@ class Tarantula extends Component {
                 suspiciousnessScores = suspiciousnessScores.concat(...output)
             }
             // Update state to retain scores
-            console.log(allFormatedTests)
             this.setState((state) => ({
-                allFormatedTestsMap: allFormatedTests
+                allFormatedTestsMap: allFormatedTests,
+                retrievedBatches: state.retrievedBatches + 1
             }));
         })
         .then((res)=> {
@@ -1649,7 +1656,7 @@ class Tarantula extends Component {
                         {
                             this.state.isRequestingCoverage &&
                             <div id="linearProgress">
-                                <LinearDeterminate />
+                                <LinearDeterminate data={this.state.retrievedBatches / this.state.totalBatches}/>
                             </div>
                         }
                         <div id="scrollContainer"></div>
