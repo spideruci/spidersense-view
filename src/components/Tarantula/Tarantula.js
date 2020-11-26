@@ -1652,13 +1652,17 @@ class Tarantula extends Component {
                     <div id="directoryContainer"></div>
 
                     <div id="visualizationWrapper">
-                        <div id="horizontalScrollView"></div>                      
                         {
                             this.state.isRequestingCoverage &&
                             <div id="linearProgress">
+                                <div>
+                                    <CircularProgress color="secondary" />
+                                    <div id='loadingAllTests'>loading all tests</div>
+                                </div>
                                 <LinearDeterminate data={this.state.retrievedBatches / this.state.totalBatches}/>
                             </div>
                         }
+                        <div id="horizontalScrollView"></div>                      
                         <div id="scrollContainer"></div>
                     </div>
                     {
