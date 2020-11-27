@@ -1,13 +1,14 @@
 import React, { Component, createRef } from 'react';
 
 import CommitHeader from './CommitHeader'
+import TestDirectory from './TestDirectory'
+import CodeContainer from './CodeContainer';
 
 import * as d3 from 'd3';
 import {extractSourceNameFromRawGithubUrl, extractFileNameFromSourceName} from '../../util/file-name-parser';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
 import Suspiciousness from '../../models/Suspiciousness';
 import SuspiciousnessV2 from '../../models/SuspiciousnessV2';
-import LinearDeterminate from './LinearDeterminate'
 
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -1605,22 +1606,11 @@ class Tarantula extends Component {
                     commitWrapper={this.commitWrapper}
                 />
                 <div id="tarantulaWrapper">
-                    <div id="directoryContainer"></div>
-
-                    <div id="visualizationWrapper">
-                        {
-                            this.state.isRequestingCoverage &&
-                            <div id="linearProgress">
-                                <div>
-                                    <CircularProgress color="secondary" />
-                                    <div id='loadingAllTests'>loading all tests</div>
-                                </div>
-                                <LinearDeterminate data={this.state.retrievedBatches / this.state.totalBatches}/>
-                            </div>
-                        }
-                        <div id="horizontalScrollView"></div>                      
-                        <div id="scrollContainer"></div>
-                    </div>
+                    <TestDirectory />
+                    <CodeContainer 
+                        isRequestingCoverage={this.state.isRequestingCoverage}
+                        loadingProgress={this.state.retrievedBatches / this.state.totalBatches}
+                    />
                     {
                         this.state.isRequestingFromWorker &&
                         <div id="progressWrapper">
