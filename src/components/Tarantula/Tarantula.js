@@ -1,5 +1,7 @@
 import React, { Component, createRef } from 'react';
 
+import CommitHeader from './CommitHeader'
+
 import * as d3 from 'd3';
 import {extractSourceNameFromRawGithubUrl, extractFileNameFromSourceName} from '../../util/file-name-parser';
 import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
@@ -106,6 +108,10 @@ class Tarantula extends Component {
         this.requestCoverage2 = this.requestCoverage.bind(this);
         this.displayCoverageOnMinimap = this.displayCoverageOnMinimap.bind(this);
         this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
+        this.onPassedOrFailedButtonClicked = this.onPassedOrFailedButtonClicked.bind(this);
+        this.onClearOrAllButtonClicked = this.onClearOrAllButtonClicked.bind(this);
+        this.onViewScoresClicked = this.onViewScoresClicked.bind(this);
+        this.onCoverableLineClicked = this.onCoverableLineClicked.bind(this);
 
         this.onSelectCommitChanged = this.onSelectCommitChanged.bind(this);
         this.onViewScoresClicked = this.onViewScoresClicked.bind(this);
@@ -1584,71 +1590,20 @@ class Tarantula extends Component {
     render() {
         return (
             <div id="tarantula">
-                <div id="commitContainer">
-                    <div id="directoryActions">
-                        <ButtonGroup size="small" variant="text" color="primary" 
-                            aria-label="small text primary button group"
-                            disabled={this.state.isButtonGroupDisabled}>
-                            <Button className="directoryButton" onClick={(e) => this.onClearOrAllButtonClicked(false, e)}>Clear</Button>
-                            <Button className="directoryButton" onClick={(e) => this.onClearOrAllButtonClicked(true, e)}>All</Button>
-                            <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
-                            <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
-                        </ButtonGroup>
-                        <Tooltip title="get coverage">
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                disabled={this.state.isRequestingCoverage}
-                                style={{ marginLeft: this.SUBMIT_MARGIN }}
-                                onClick={() => this.requestCoverage()}
-                            >
-                                Submit
-                            </Button>
-                        </Tooltip>
-                    </div>
-
-                    <div>
-                        <Tooltip title="view score">
-                            <IconButton aria-label="view scores" color="primary" 
-                                disabled={this.state.isViewScoresDisabled}
-                                onClick={this.onViewScoresClicked}>
-                                <CodeIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </div>
-
-                    <div ref={this.commitWrapper}>
-                        <FormControl >
-                            <InputLabel id="simpleSelectLabelCommit">Commit</InputLabel>
-                            <Select
-                                labelId="simpleSelectLabelCommit"
-                                id="selectCommit"
-                                value={this.state.selectedCommit}
-                                onChange={e => this.onSelectCommitChanged(e.target.value)}
-                            >
-                                {
-                                    this.state.commits.map((c) => (
-                                        <MenuItem className="taranMenuItem" key={c.commitId} value={c.commitId}>
-                                            <div>
-                                                <p className="menuItemMessage">{shortenMessage(c.message)}</p>
-                                                <p>
-                                                    <span className="menuItemCommitter">
-                                                        {c.committer || "<invalid-user>"}
-                                                    </span>
-                                                    <span className="menuItemDate"> committed on {convertTimestampToDate(c.timestamp)}</span>
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="menuItemCommitId">{shortenCommitId(c.commitId)}</p>
-                                            </div>
-                                        </MenuItem>
-                                    ))
-                                }
-                            </Select>
-                        </FormControl>
-                    </div>
-                </div>
-
+                <CommitHeader 
+                    onClearOrAllButtonClicked={this.onClearOrAllButtonClicked}
+                    onPassedOrFailedButtonClicked={this.onPassedOrFailedButtonClicked}
+                    requestCoverage={this.requestCoverage}
+                    onViewScoresClicked={this.onViewScoresClicked}
+                    onSelectCommitChanged={this.onSelectCommitChanged}
+                    isRequestingCoverage={this.state.isRequestingCoverage}
+                    isViewScoresDisabled={this.state.isViewScoresDisabled}
+                    isButtonGroupDisabled={this.state.isButtonGroupDisabled}
+                    selectedCommit={this.state.selectedCommit}
+                    commits={this.state.commits}
+                    submitMarginLeft={this.SUBMIT_MARGIN}
+                    commitWrapper={this.commitWrapper}
+                />
                 <div id="tarantulaWrapper">
                     <div id="directoryContainer"></div>
 
