@@ -1,6 +1,6 @@
 import * as constants from './constants'
 import { spidersenseWorkerUrls } from '../../../vars/vars'
-import {fromJS} from "immutable";
+import { fromJS } from "immutable";
 
 const updateProjects = (projects) => ({
     type: constants.GET_PROJECTS,
@@ -23,11 +23,8 @@ export const getProjects = () => {
         }).then((response) => {
             return response.json();
         }).then((data) => {
-            console.log("Callback:\n" + JSON.stringify(data));
-
             // Update state to retain projects
             dispatch(updateProjects(data.projects))
-
             dispatch(updateViewOptions(0))
             dispatch(closeBackdrop())
         }).catch((error) => {

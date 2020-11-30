@@ -1,4 +1,7 @@
 import React, { Component, createRef } from 'react';
+import { connect } from 'react-redux';
+
+import { actionCreator } from './store';
 
 import CommitHeader from './CommitHeader'
 import TestDirectory from './TestDirectory'
@@ -6,22 +9,8 @@ import CodeContainer from './CodeContainer';
 
 import * as d3 from 'd3';
 import {extractSourceNameFromRawGithubUrl, extractFileNameFromSourceName} from '../../util/file-name-parser';
-import {shortenCommitId, shortenMessage, convertTimestampToDate} from './TaranMenuItem';
-import Suspiciousness from '../../models/Suspiciousness';
 import SuspiciousnessV2 from '../../models/SuspiciousnessV2';
 
-import { makeStyles } from '@material-ui/core/styles';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import Button from '@material-ui/core/Button';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
-import Icon from '@material-ui/core/Icon';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import PageviewIcon from '@material-ui/icons/Pageview';
-import CodeIcon from '@material-ui/icons/Code';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -32,6 +21,8 @@ import { spidersenseWorkerUrls } from '../../vars/vars';
 import "./Tarantula.scss";
 import "./MaterialCheckbox.css";
 import "./Tooltip.css";
+import { act } from 'react-dom/test-utils';
+
 
 
 class Tarantula extends Component {
@@ -44,40 +35,6 @@ class Tarantula extends Component {
      ======================================================================= */
     constructor(props) {
         super(props);
-
-        // Initialize state
-        this.state = {
-            // Commits
-            commits: props.commits,
-            selectedCommit: '',
-
-            // All files
-            allFiles: [],
-
-            // Selected File Container
-            selectionIndex: -1,
-            numberOfSvgs: 0,
-            minimapMaxHeights: [],
-            scrollContainerHeight: 0,
-
-            // Active test cases
-            testcases: [],
-            totalBatches: -1,
-            retrievedBatches: 0,
-
-            // Fault localization
-            suspiciousness: [],
-
-            // Buttons, Progresses, and Dialogs
-            isButtonGroupDisabled: true,
-            isViewScoresDisabled: true,
-            isRequestingFromWorker: false,
-            isDialogOpened: false,
-            isSuspDialogOpened: false,
-            coverableIndex: -1,
-            isRequestingCoverage: false,
-            allFormatedTestsMap: []
-        };
 
         // Constants
         this.FONT_SIZE = 1;            // Font size for svg text
@@ -106,7 +63,6 @@ class Tarantula extends Component {
         this.generateDisplay = this.generateDisplay.bind(this);
         this.requestCoverage = this.requestCoverage.bind(this);
         this.requestAllCoverage = this.requestAllCoverage.bind(this);
-        this.requestCoverage2 = this.requestCoverage.bind(this);
         this.displayCoverageOnMinimap = this.displayCoverageOnMinimap.bind(this);
         this.displayCoverageOnDisplay = this.displayCoverageOnDisplay.bind(this);
         this.onPassedOrFailedButtonClicked = this.onPassedOrFailedButtonClicked.bind(this);
@@ -123,8 +79,9 @@ class Tarantula extends Component {
     } 
 
     componentDidMount() {
-        if (this.state.commits.length !== 0) {
-            this.onSelectCommitChanged(this.state.commits[0].commitId);
+        const { commits } = this.props
+        if (commits.length !== 0) {
+            this.onSelectCommitChanged(commits[0].commitId);
         }
     }
 
@@ -144,6 +101,7 @@ class Tarantula extends Component {
      * @param {string} sha The commit id
      */
     requestSourceLinks(sha) {
+        const { setRequestingFromWorker } = this.props;
         let url = `${spidersenseWorkerUrls.getSourceInfo}${sha}`;
 
         fetch(url, {
@@ -151,14 +109,10 @@ class Tarantula extends Component {
         }).then((response) => {
             return response.json();
         }).then((data) => {            
-            console.log("Callback:\n" + JSON.stringify(data.sourceLinks));
-
             this.downloadContentsFromGithub(data.sourceLinks);
         }).catch((error) => {
             console.error(error);
-            this.setState((state) => ({
-                isRequestingFromWorker: false
-            }));
+            setRequestingFromWorker(false);
         });
     }
 
@@ -169,6 +123,8 @@ class Tarantula extends Component {
      * @param {array} sourceLinks The urls to the source files
      */
     downloadContentsFromGithub(sourceLinks) {
+        const { setAllFiles, setRequestingFromWorker } = this.props;
+
         // Get names of source links and links in different arrays
         let names = sourceLinks.map((u) => {
             return extractSourceNameFromRawGithubUrl(u);
@@ -184,7 +140,7 @@ class Tarantula extends Component {
                 return data;
             });
         })).then((fileTexts) => {
-            // console.log('Callback:\n', fileTexts);
+            console.log('Callback:\n', fileTexts);
 
             // Generate file container
             const numberOfFileContainers = fileTexts.length;
@@ -214,17 +170,13 @@ class Tarantula extends Component {
             }
 
             // Update state so that allFiles contains the text of each file retrieved
-            this.setState((state) => ({
-                allFiles: allFiles
-            }));
+            setAllFiles(allFiles)
 
             // Make request to get test coverage
             this.requestTestcases();
         }).catch((error) => {
             console.error(error);
-            this.setState((state) => ({
-                isRequestingFromWorker: false
-            }));
+            setRequestingFromWorker(false)
         });
     }
 
@@ -233,8 +185,9 @@ class Tarantula extends Component {
      * the selected commit id. On response, generate the directory view.
      */
     requestTestcases() {
-        let selectedCommitId = this.state.selectedCommit;
-        let url = `${spidersenseWorkerUrls.getAllTestcases}${selectedCommitId}`;
+        const { selectedCommit, setRequestingFromWorker } = this.props;
+
+        let url = `${spidersenseWorkerUrls.getAllTestcases}${selectedCommit}`;
 
         fetch(url, {
             method: 'GET'
@@ -245,18 +198,22 @@ class Tarantula extends Component {
 
             this.generateDirectoryView(data);
             this.requestAllCoverage();
-            this.setState((state) => ({
-                isRequestingFromWorker: false
-            }));
+            setRequestingFromWorker(false)
         }).catch((error) => {
             console.error(error);
-            this.setState((state) => ({
-                isRequestingFromWorker: false
-            }));
+            setRequestingFromWorker(false)
         });
     }
 
     requestAllCoverage() {
+        const { 
+            setRequestingCoverage, 
+            setTotalBatches, 
+            setRetrievedBatches,
+            setAllFormatedTestMap,
+            retrievedBatches } = this.props;
+        const allFiles = this.props.allFiles.toJS();
+
         // Get the test ids of activated (checked) tests 
         let allTestCases = d3.selectAll(".testcase")
             .select("input")
@@ -281,11 +238,8 @@ class Tarantula extends Component {
         if (currentBatch !== '') {
             tests.push(currentBatch.slice(0, currentBatch.length - 1))
         }
-        // console.log(tests);
-        this.setState((state) => ({
-            isRequestingCoverage: true,
-            totalBatches: tests.length
-        }));
+        setRequestingCoverage(true)
+        setTotalBatches(tests.length)
         
         Promise.all(tests.map((batch) => {
             var formdata = new FormData();
@@ -297,10 +251,7 @@ class Tarantula extends Component {
             };            
             return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
             .then(response => {
-                this.setState((state) => ({
-                    retrievedBatches: state.retrievedBatches + 1 
-                }))
-                console.log("download percentage: " + (this.state.retrievedBatches / this.state.totalBatches) * 100 + "%");
+                setRetrievedBatches(retrievedBatches + 1)
                 return response.json();
             })
             // .then((data) => {
@@ -319,7 +270,7 @@ class Tarantula extends Component {
                     return {testcases: result['t' + e]};
                 })
                 // console.log(testList)
-                let fileNames = this.state.allFiles.map((f) => {
+                let fileNames = allFiles.map((f) => {
                     return f.name;
                 });
                 let susp2 = new SuspiciousnessV2();
@@ -327,114 +278,22 @@ class Tarantula extends Component {
                 suspiciousnessScores = suspiciousnessScores.concat(...output)
             }
             // Update state to retain scores
-            this.setState((state) => ({
-                allFormatedTestsMap: allFormatedTests,
-                retrievedBatches: state.retrievedBatches + 1
-            }));
+            setAllFormatedTestMap(allFormatedTests);
+            setRetrievedBatches(retrievedBatches + 1)
         })
         .then((res)=> {
-            this.setState((state) => ({
-                isRequestingCoverage: false
-            }));
+            setRequestingCoverage(false)
         })
         .catch((error) => {
             console.error(error);
         });
     }
-    /**
-     * Request from spidersense-worker test coverage data for each testcase id that 
-     * was checked in the directory view. Remove existing testcases and disable the
-     * view scores button before getting the coverage data. On response, calculate
-     * suspiciousness scores, update state to retain scores, and display coverage
-     * on minimap and display view.
-     */
-    requestCoverage2() {
-        this.removeExistingCoverage();
 
-        this.setViewScoresDisabled();
-
-        // Get the test ids of activated (checked) tests 
-        let activatedTestCases = d3.selectAll(".testcase")
-            .select("input")
-            .nodes()
-            .filter(n => n.checked)
-            .map(n => n.getAttribute("key"));
-
-        // Return if there are no activated test cases
-        if (activatedTestCases.length === 0) {
-            return;
-        }
-
-        console.log("Activated tests: " + activatedTestCases);
-        let tests = []
-        let currentBatch = ''
-        activatedTestCases.forEach((t, i) => {
-            if (i !== 0 && i % this.BATCH_SIZE === 0) {
-                tests.push(currentBatch.slice(0, currentBatch.length - 1))
-                currentBatch = ''
-            }
-            currentBatch += t + ','
-        })
-        if (currentBatch !== '') {
-            tests.push(currentBatch.slice(0, currentBatch.length - 1))
-        }
-        // console.log(tests);
-        this.setState((state) => ({
-            isRequestingCoverage: true
-        }));
-        Promise.all(tests.map((batch) => {
-            var formdata = new FormData();
-            formdata.append("tlist", batch);
-            var requestOptions = {
-                method: 'POST',
-                body: formdata,
-                redirect: 'follow'
-            };            
-            return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
-            .then(response => {
-                return response.json();
-            })
-            // .then((data) => {
-            //     return data;
-            // });
-        })).then(responses => {
-            let suspiciousnessScores = []
-            for (let i = 0; i < responses.length; i++) {
-                let result = responses[i]
-                // console.log(result)
-                let testList = tests[i].split(',')
-                let formatedTests = testList.map(e => {
-                   return {testcases: result['t' + e]}
-                })
-                // console.log(testList)
-                let fileNames = this.state.allFiles.map((f) => {
-                    return f.name;
-                });
-                let susp2 = new SuspiciousnessV2();
-                let output = susp2.computeSuspiciousness(formatedTests, fileNames);
-                suspiciousnessScores = suspiciousnessScores.concat(...output)
-            }
-            console.log(suspiciousnessScores)
-            // Update state to retain scores
-            this.setState((state) => ({
-                suspiciousness: suspiciousnessScores
-            }));
-            // Display coverage on minimap
-            this.displayCoverageOnMinimap(suspiciousnessScores);
-
-            // Display coverage on display view
-            this.displayCoverageOnDisplay(suspiciousnessScores);    
-        })
-        .then((res)=> {
-            this.setState((state) => ({
-                isRequestingCoverage: false
-            }));
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-    }
     requestCoverage() {
+        const allFiles = this.props.allFiles.toJS()
+        const allFormatedTestsMap = this.props.allFormatedTestsMap.toJS()
+        const { setSuspicousness } = this.props;
+
         this.removeExistingCoverage();
     
         this.setViewScoresDisabled();
@@ -452,17 +311,15 @@ class Tarantula extends Component {
         }
     
         // console.log("Activated tests: " + activatedTestCases);
-        let formatedTests = activatedTestCases.map((key)=> this.state.allFormatedTestsMap['t' + key]);
+        let formatedTests = activatedTestCases.map((key)=> allFormatedTestsMap['t' + key]);
         let susp2 = new SuspiciousnessV2();
-        let fileNames = this.state.allFiles.map((f) => {
+        let fileNames = allFiles.map((f) => {
             return f.name;
         });
         let output = susp2.computeSuspiciousness(formatedTests, fileNames);
-        console.log(output)
         // Update state to retain scores
-        this.setState((state) => ({
-            suspiciousness: output
-        }));
+        setSuspicousness(output)
+
         // Display coverage on minimap
         this.displayCoverageOnMinimap(output);
     
@@ -483,6 +340,7 @@ class Tarantula extends Component {
      * @param {number} numFiles The number of files
      */
     generateFileContainers(numFiles) {
+        console.log("generating file container: " + numFiles);
         let horizontalScollViewD3 = d3.select("#horizontalScrollView")
             .style("width", this.TABLE_BODY_WIDTH + "px")
             .style("overflow-x", "scroll");
@@ -491,6 +349,7 @@ class Tarantula extends Component {
             horizontalScollViewD3.append("div")
                 .classed('fileContainer', true)
                 .on('click', (e) => {
+                    console.log("selection clicked");
                     this.updateSelection(i, e);
                 });
         }
@@ -575,6 +434,8 @@ class Tarantula extends Component {
      * @param {Object} response The response received
      */
     generateDirectoryView(response) {
+        const { setTestcases } = this.props;
+
         // Reformat so that each property of object is an object in an array
         let testcasesData = [];
         for (let k of Object.keys(response)) {
@@ -635,9 +496,7 @@ class Tarantula extends Component {
             .text(function(t) {return t.signature});
 
         // Update state for testcases
-        this.setState((state) => ({
-            testcases: testcasesData
-        }));
+        setTestcases(testcasesData)
 
         // Add click listeners for checkboxes
         d3.selectAll(".sourceName input")
@@ -661,8 +520,11 @@ class Tarantula extends Component {
      * Update the state to save the scrollContainerHeight
      */
     generateDisplay(index) {
+        const { setScrollContainerHeight } = this.props
+        const allFiles = this.props.allFiles.toJS();
+
         // Grab contents from state
-        let obj = this.state.allFiles[index];
+        let obj = allFiles[index];
         let content = obj.contents;
 
         // Clear everything in scroll view
@@ -703,9 +565,7 @@ class Tarantula extends Component {
         // Update state scroll container height
         let scrollContainer = d3.select('#scrollContainer').node();
         let scrollHeight =  scrollContainer.scrollHeight;
-        this.setState((state) => ({
-            scrollContainerHeight: scrollHeight
-        }));
+        setScrollContainerHeight(scrollHeight)
     }
 
     /**
@@ -720,6 +580,9 @@ class Tarantula extends Component {
      * @param {number} index The index of the file container that was clicked.
      */
     generateSlider(index) {
+        const { numberOfSvgs, scrollContainerHeight } = this.props;
+        const allFiles = this.props.allFiles.toJS();
+        const minimapMaxHeights = this.props.minimapMaxHeights.toJS();
         // Remove all existing sliders and drag behaviors first
         d3.selectAll(".sliderRect").remove();
 
@@ -742,13 +605,12 @@ class Tarantula extends Component {
         let transitionSlider;
         let currentSvgIndex = 0;
 
-        let maxNumSvgs= this.state.numberOfSvgs;
-        let minimapMaxHeights = this.state.minimapMaxHeights;
+        let maxNumSvgs= numberOfSvgs;
         let currentMinimapHeight = minimapMaxHeights[currentSvgIndex];
-        let scrollContainerHeight = this.state.scrollContainerHeight - SCROLL_HEIGHT;
+        let newScrollContainerHeight = scrollContainerHeight - SCROLL_HEIGHT;
 
-        let contents = this.state.allFiles[index].contents;
-        let multiplier = scrollContainerHeight / (contents.length * this.PIXELS_PER_LINE);
+        let contents = allFiles[index].contents;
+        let multiplier = newScrollContainerHeight / (contents.length * this.PIXELS_PER_LINE);
 
         // Use multiplier to calculate slider's height
         const SLIDER_HEIGHT = Math.floor((SCROLL_HEIGHT - (this.SCROLL_CONTAINER_PADDING * 2)) / multiplier);
@@ -961,9 +823,11 @@ class Tarantula extends Component {
      * @param {Object} suspiciousnessScores The suspiciousness object
      */
     displayCoverageOnMinimap(suspiciousnessScores) {
+        const allFiles = this.props.allFiles.toJS()
+
         for (let score of suspiciousnessScores) {
             // Find index of file container
-            let fileContainerIndex = this.state.allFiles.findIndex((val) => {
+            let fileContainerIndex = allFiles.findIndex((val) => {
                 return (score.source === val.name);
             });
 
@@ -1006,8 +870,12 @@ class Tarantula extends Component {
      * highlight lines of selected file based on suspiciousness data.
      */
     displayCoverageOnDisplay(input) {
+        const { selectionIndex } = this.props;
+        const allFiles = this.props.allFiles.toJS();
+        const suspiciousness = this.props.suspiciousness
+
         // Return if no file container was selected
-        if (this.state.selectionIndex === -1) {
+        if (selectionIndex === -1) {
             // console.log("No file containers were selected");
             return;
         }
@@ -1016,10 +884,10 @@ class Tarantula extends Component {
         //     + "\nFiles: " + JSON.stringify(this.state.allFiles));
 
         // Get file name for selected file container and suspiciousness scores
-        let fileName = this.state.allFiles[this.state.selectionIndex].name;
+        let fileName = allFiles[selectionIndex].name;
         let suspiciousnessScores;
         if (input === undefined) {
-            suspiciousnessScores = this.state.suspiciousness;
+            suspiciousnessScores = suspiciousness;
         } else {
             suspiciousnessScores = input;
         }
@@ -1055,21 +923,14 @@ class Tarantula extends Component {
             });
     }
 
-    /**
-     * Sets disabled attribute for the button group, which will enable
-     * or disable all buttons in the group.
-     */
-    setButtonGroupDisabled(disabled) {
-        this.setState((state) => ({
-            isButtonGroupDisabled: disabled
-        }));
-    }
 
     /**
      * Checks if any tests have been activated on the directory view.
      * If none are, then disables the view scores button. Enabled otherwise
      */
     setViewScoresDisabled() {
+        const { setViewScoresDisabled, selectionIndex } = this.props;
+
         // Get the test ids of the activated (checked) tests 
         let activatedTestCases = d3.selectAll(".testcase")
             .select("input")
@@ -1078,18 +939,21 @@ class Tarantula extends Component {
             .map(n => n.getAttribute("key"));
 
         // Update state to enable or disable viewScores button
-        let enabled = (activatedTestCases.length > 0) && this.state.selectionIndex !== -1;
-        this.setState((state) => ({
-            isViewScoresDisabled: !enabled
-        }));
+        let enabled = (activatedTestCases.length > 0) && selectionIndex !== -1;
+        setViewScoresDisabled(!enabled)
     }
 
     /**
      * Generate the title andcontent for the view dialog (Fault Localization Analysis)
      */
     generateViewDialog() {
+        const { isDialogOpened, 
+                selectionIndex } = this.props;
+        const suspiciousness = this.props.suspiciousness.toJS()
+        const allFiles = this.props.allFiles.toJS()
+
         // Return if no file containers were selected
-        if (!this.state.isDialogOpened || this.state.selectionIndex === -1) {
+        if (!isDialogOpened || selectionIndex === -1) {
             return;
         }
 
@@ -1098,10 +962,10 @@ class Tarantula extends Component {
 
         // Grab contents, file name for selected file container, and 
         // suspiciousness scores from state
-        let obj = this.state.allFiles[this.state.selectionIndex];
+        let obj = allFiles[selectionIndex];
         let content = obj.contents;
-        let fileName = this.state.allFiles[this.state.selectionIndex].name;
-        let suspiciousnessScores = this.state.suspiciousness;
+        let fileName = allFiles[selectionIndex].name;
+        let suspiciousnessScores = suspiciousness;
 
         // Filter score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
@@ -1181,20 +1045,24 @@ class Tarantula extends Component {
      * Generate the title and content for the susp dialog (Line Details)
      */
     generateSuspDialog() {
+        const { isSuspDialogOpened,
+                selectionIndex,
+                coverableIndex } = this.props;
+        const suspiciousness = this.props.suspiciousness.toJS();
+        const allFiles = this.props.allFiles.toJS();
+
         // Return if no file containers were selected
-        if (!this.state.isSuspDialogOpened || this.state.selectionIndex === -1 
-            || this.state.coverableIndex === -1) {
+        if (!isSuspDialogOpened || selectionIndex === -1 
+            || coverableIndex === -1) {
             return;
         }
 
-        let coverableIndex = this.state.coverableIndex;
-
         // Grab contents, file name for selected file container, and suspiciousness scores
         // from state
-        let obj = this.state.allFiles[this.state.selectionIndex];
+        let obj = allFiles[selectionIndex];
         let content = obj.contents;
-        let fileName = this.state.allFiles[this.state.selectionIndex].name;
-        let suspiciousnessScores = this.state.suspiciousness;
+        let fileName = allFiles[selectionIndex].name;
+        let suspiciousnessScores = suspiciousness;
 
         // Filter appropriate score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
@@ -1230,15 +1098,7 @@ class Tarantula extends Component {
             {
                 title: "%f:",
                 value: lineObj.fRatio
-            },
-            // {
-            //     title: "Total Passed:",
-            //     value: 0
-            // },
-            // {
-            //     title: "Total Failed:",
-            //     value: 0
-            // }
+            }
         ];
 
         let containers = d3.select("#dialogSuspContainer")
@@ -1289,6 +1149,9 @@ class Tarantula extends Component {
      * 
      ======================================================================= */
     resetComponent() {
+        console.log("reseting...");
+        const { reset } = this.props;
+
         // Remove nodes
         d3.select("#directoryContainer").selectAll("*").remove();
         d3.select("#directoryContainer")
@@ -1306,21 +1169,7 @@ class Tarantula extends Component {
 
         // Reset state
         // NOTE: commits[] is not reset 
-        this.setState((state) => ({
-            selectedCommit: '',
-            allFiles: [],
-            selectionIndex: -1,
-            numberOfSvgs: 0,
-            minimapMaxHeights: [],
-            scrollContainerHeight: 0,
-            testcases: [],
-            suspiciousness: [],
-            isButtonGroupDisabled: true,
-            isViewScoresDisabled: true,
-            isDialogOpened: false,
-            isSuspDialogOpened: false,
-            coverableIndex: -1
-        }));
+        reset();
     }
 
     /**
@@ -1328,6 +1177,8 @@ class Tarantula extends Component {
      * and on the display
      */
     removeExistingCoverage() {
+        const { selectionIndex } = this.props;
+
         // Remove coverage nodes on minimap
         let svgsD3 = d3.selectAll(".fileContainer")
             .selectAll(".svgContainer > div > svg");
@@ -1335,7 +1186,7 @@ class Tarantula extends Component {
             .remove();
         
         // If the display view is shown, remove coverage nodes 
-        if (this.state.selectionIndex !== -1) {
+        if (selectionIndex !== -1) {
             let trD3 = d3.select("#scrollContainer table tbody")
                 .selectAll("tr.coverable")
                 .style("background-color", null)
@@ -1359,22 +1210,19 @@ class Tarantula extends Component {
      * @param {Object} event The event that triggered the callback
      */
     onSelectCommitChanged(commitId) {
-        // let sha = event.target.value;
-
+        const { selectedCommit, setSelectedCommit, setButtonGroupDisabled, setRequestingFromWorker } = this.props;
+        
         // Reset only if newly selected sha is different from previous sha
-        if (this.state.selectedCommit !== commitId) {
+        if (selectedCommit !== commitId) {
             this.resetComponent();
         }
 
         // Update state for the selected commit/sha
-        this.setState((state) => ({
-            selectedCommit: commitId,
-            // Show progress
-            isRequestingFromWorker: true
-        }));
+        setSelectedCommit(commitId);
+        setRequestingFromWorker(true)
 
         // Enable or disable the button group
-        this.setButtonGroupDisabled(false);
+        setButtonGroupDisabled(false);
         
         // Request urls to the source files for current commit
         this.requestSourceLinks(commitId);
@@ -1389,14 +1237,16 @@ class Tarantula extends Component {
      * @param   {boolean}   checked     Whether the input was checked or unchecked
      */
     onSourceNameChecked(sourceName, checked) {
+        const testcases = this.props.testcases.toJS();
+
         // Filter state's testcases by source name that was checked
-        let source = this.state.testcases.filter((t) => {
+        let source = testcases.filter((t) => {
             let k = Object.keys(t)[0];
             return k === sourceName;
         })[0];
         
         // Gather testcase ids in an array
-        let testcases = source[sourceName].map((tc) => {
+        let currentTestcases = source[sourceName].map((tc) => {
             return tc.testcaseId;
         });
 
@@ -1404,17 +1254,9 @@ class Tarantula extends Component {
         d3.selectAll(".testcase")
             .select("input")
             .filter(function(d, i) {
-                return testcases.includes(d3.select(this).attr("key"));
+                return currentTestcases.includes(d3.select(this).attr("key"));
             })
             .property("checked", checked);
-    }
-
-    /**
-     * Event callback for when the checkbox for a testcase is clicked.
-     * Loads coverage data for test case.
-     */
-    onTestCaseChecked() {
-
     }
 
     /**
@@ -1426,13 +1268,20 @@ class Tarantula extends Component {
      * @param {number} index The index of the file container that was clicked
      */
     updateSelection(index) {
-        if (this.state.selectionIndex === index) {
-            // console.log("Already in same file container. Returning...");
+        console.log("selection: " + index);
+        const { 
+            selectionIndex, 
+            setSelectionIndex,
+            setNumberOfSvgs,
+            setMinimapMaxHeights } = this.props;
+        const allFiles = this.props.allFiles.toJS()
+
+        if (selectionIndex === index) {
             return;
         }
 
         // Calculate variables
-        const linesOfCode = this.state.allFiles[index].contents.length;
+        const linesOfCode = allFiles[index].contents.length;
         let totalHeightForFile = linesOfCode * this.PIXELS_PER_LINE;
         let numberOfSvgs = Math.ceil(totalHeightForFile  / this.SVG_MAX_HEIGHT);
 
@@ -1444,11 +1293,9 @@ class Tarantula extends Component {
         }
 
         // Update state
-        this.setState((state) => ({
-            selectionIndex: index,
-            numberOfSvgs: numberOfSvgs,
-            minimapMaxHeights: minimapMaxHeights
-        }));
+        setSelectionIndex(index)
+        setNumberOfSvgs(numberOfSvgs)
+        setMinimapMaxHeights(minimapMaxHeights)
 
         // Change background color of file container
         let fileContainers = d3.selectAll(".fileContainer")
@@ -1493,11 +1340,11 @@ class Tarantula extends Component {
      * @param {boolean} passFailStatus If all passed testcases or all failed should be checked
      */
     onPassedOrFailedButtonClicked(passFailStatus) {
+        const testcases = this.props.testcases.toJS()
         let status = (passFailStatus) ? 1 : 0;
 
         // Get test case ids for tests that passed from 
         let testcaseIds = [];
-        let testcases = this.state.testcases;
         for (let t of testcases) {
             let k = Object.keys(t)[0];
             let v = t[k];
@@ -1533,10 +1380,10 @@ class Tarantula extends Component {
      * Update state to set isDialogOpened to true.
      */
     onViewScoresClicked() {
-        if (!this.state.isDialogOpened) {
-            this.setState((state) => ({
-                isDialogOpened: true
-            }));
+        const { isDialogOpened, setDialogOpened } = this.props;
+
+        if (!isDialogOpened) {
+            setDialogOpened(true)
         }
     }
 
@@ -1547,11 +1394,11 @@ class Tarantula extends Component {
      * @param {number} coverableIndex The index of the clicked coverable tr node
      */
     onCoverableLineClicked(coverableIndex) {
-        if (!this.state.isSuspDialogOpened) {
-            this.setState((state) => ({
-                isSuspDialogOpened: true,
-                coverableIndex: coverableIndex
-            }));
+        const { isSuspDialogOpened, setSuspDialogOpened, setCoverableIndex } = this.props;
+
+        if (!isSuspDialogOpened) {
+            setSuspDialogOpened(true)
+            setCoverableIndex(coverableIndex)
         }
     }
 
@@ -1589,6 +1436,17 @@ class Tarantula extends Component {
      * 
      ======================================================================= */
     render() {
+        const { isRequestingCoverage,
+                isRequestingFromWorker,
+                isViewScoresDisabled,
+                isButtonGroupDisabled,
+                isDialogOpened,
+                isSuspDialogOpened,
+                selectedCommit,
+                commits,
+                retrievedBatches,
+                totalBatches } = this.props
+
         return (
             <div id="tarantula">
                 <CommitHeader 
@@ -1597,22 +1455,22 @@ class Tarantula extends Component {
                     requestCoverage={this.requestCoverage}
                     onViewScoresClicked={this.onViewScoresClicked}
                     onSelectCommitChanged={this.onSelectCommitChanged}
-                    isRequestingCoverage={this.state.isRequestingCoverage}
-                    isViewScoresDisabled={this.state.isViewScoresDisabled}
-                    isButtonGroupDisabled={this.state.isButtonGroupDisabled}
-                    selectedCommit={this.state.selectedCommit}
-                    commits={this.state.commits}
+                    isRequestingCoverage={isRequestingCoverage}
+                    isViewScoresDisabled={isViewScoresDisabled}
+                    isButtonGroupDisabled={isButtonGroupDisabled}
+                    selectedCommit={selectedCommit}
+                    commits={commits}
                     submitMarginLeft={this.SUBMIT_MARGIN}
                     commitWrapper={this.commitWrapper}
                 />
                 <div id="tarantulaWrapper">
                     <TestDirectory />
                     <CodeContainer 
-                        isRequestingCoverage={this.state.isRequestingCoverage}
-                        loadingProgress={this.state.retrievedBatches / this.state.totalBatches}
+                        isRequestingCoverage={isRequestingCoverage}
+                        loadingProgress={retrievedBatches / totalBatches}
                     />
                     {
-                        this.state.isRequestingFromWorker &&
+                        isRequestingFromWorker &&
                         <div id="progressWrapper">
                             <CircularProgress color="secondary" />
                         </div>
@@ -1623,7 +1481,7 @@ class Tarantula extends Component {
                     onEntered={this.generateViewDialog}
                     onClose={(e) => this.onDialogClose("view", e)} 
                     aria-labelledby="viewDialogTitle" 
-                    open={this.state.isDialogOpened}
+                    open={isDialogOpened}
                     fullWidth={true}
                     maxWidth="md">
                     <DialogTitle id="viewDialogTitle"></DialogTitle>
@@ -1636,7 +1494,7 @@ class Tarantula extends Component {
                     onEntered={this.generateSuspDialog}
                     onClose={(e) => this.onDialogClose("susp", e)}
                     aria-labelledby="suspDialogTitle" 
-                    open={this.state.isSuspDialogOpened}
+                    open={isSuspDialogOpened}
                     fullWidth={true}
                     maxWidth="sm">
                     <DialogTitle id="suspDialogTitle">Line Details</DialogTitle>
@@ -1659,4 +1517,100 @@ class Tarantula extends Component {
     }
 }
 
-export default Tarantula;
+const mapStateToProps = (state) => {
+    return {
+        // Commits
+        selectedCommit: state.getIn(['project', 'tarantula', 'selectedCommit']),
+
+        // All files
+        allFiles: state.getIn(['project', 'tarantula', 'allFiles']),
+        
+        // Selected File Container
+        selectionIndex: state.getIn(['project', 'tarantula', 'selectedIndex']),
+        numberOfSvgs: state.getIn(['project', 'tarantula', 'numberOfSvgs']),
+        minimapMaxHeights: state.getIn(['project', 'tarantula', 'minimapMaxHeights']),
+        scrollContainerHeight: state.getIn(['project', 'tarantula', 'scrollContainerHeight']),
+        
+        // Active test cases
+        testcases: state.getIn(['project', 'tarantula', 'testcases']),
+        totalBatches: state.getIn(['project', 'tarantula', 'totalBatches']),
+        retrievedBatches: state.getIn(['project', 'tarantula', 'retrievedBatches']),
+        
+        // Fault localization
+        suspiciousness: state.getIn(['project', 'tarantula', 'suspiciousness']),
+        
+        // Buttons, Progresses, and Dialogs
+        isButtonGroupDisabled: state.getIn(['project', 'tarantula', 'isButtonGroupDisabled']),
+        isViewScoresDisabled: state.getIn(['project', 'tarantula', 'isViewScoresDisabled']),
+        isRequestingFromWorker: state.getIn(['project', 'tarantula', 'isRequestingFromWorker']),
+        isDialogOpened: state.getIn(['project', 'tarantula', 'isDialogOpened']),
+        isSuspDialogOpened: state.getIn(['project', 'tarantula', 'isSuspDialogOpened']),
+        coverableIndex: state.getIn(['project', 'tarantula', 'coverableIndex']),
+        isRequestingCoverage: state.getIn(['project', 'tarantula', 'isRequestingCoverage']),
+        allFormatedTestsMap: state.getIn(['project', 'tarantula', 'allFormatedTestsMap']),
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        reset() {
+            dispatch(actionCreator.resetComponent())
+        },
+        setSelectedCommit(commitId) {
+            dispatch(actionCreator.updateSelectedCommit(commitId))
+        },
+        setRequestingFromWorker(isRequesting) {
+            dispatch(actionCreator.updateRequestingFromWorker(isRequesting))
+        },
+        setButtonGroupDisabled(disabled) {
+            dispatch(actionCreator.updateButtonGroupDisabled(disabled))
+        },
+        setAllFiles(files) {
+            dispatch(actionCreator.updateAllFiles(files))
+        },
+        setSelectionIndex(index) {
+            dispatch(actionCreator.updateSelectionIndex(index))
+        },
+        setNumberOfSvgs(num) {
+            dispatch(actionCreator.updateNumberOfSvgs(num))
+        },
+        setMinimapMaxHeights(heights) {
+            dispatch(actionCreator.updateMinimapMaxHeights(heights))
+        },
+        setScrollContainerHeight(height) {
+            dispatch(actionCreator.updateScrollContainerHeight(height))
+        },
+        setTestcases(testcases) {
+            dispatch(actionCreator.updateTestCases(testcases))
+        },
+        setTotalBatches(num) {
+            dispatch(actionCreator.updateTotalBatches(num))
+        },
+        setRetrievedBatches(num) {
+            dispatch(actionCreator.updateRetrievedBatches(num))
+        },
+        setSuspDialogOpened(isOpened) {
+            dispatch(actionCreator.updateSuspDialogOpened(isOpened))
+        },
+        setSuspicousness(sus) {
+            dispatch(actionCreator.updateSuspiciousness(sus))
+        },
+        setCoverableIndex(index) {
+            dispatch(actionCreator.updateCoverableIndex(index))
+        },
+        setRequestingCoverage(isRequesting) {
+            dispatch(actionCreator.updateRequestingCoverage(isRequesting))
+        },
+        setViewScoresDisabled(disabled) {
+            dispatch(actionCreator.updateViewScoresDisabled(disabled))
+        },
+        setDialogOpened(opened) {
+            dispatch(actionCreator.updateDialogOpened(opened))
+        },
+        setAllFormatedTestMap(map) {
+            dispatch(actionCreator.updateAllFormatedTestsMap(map))
+        }
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Tarantula);

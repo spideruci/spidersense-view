@@ -174,7 +174,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         requestAllProjects(currentProjects) {
-            console.log(currentProjects);
             if (currentProjects.size === 0) {
                 dispatch(actionCreator.getProjects());
             }
