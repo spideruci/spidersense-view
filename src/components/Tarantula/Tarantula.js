@@ -349,7 +349,6 @@ class Tarantula extends Component {
             horizontalScollViewD3.append("div")
                 .classed('fileContainer', true)
                 .on('click', (e) => {
-                    console.log("selection clicked");
                     this.updateSelection(i, e);
                 });
         }
@@ -872,11 +871,14 @@ class Tarantula extends Component {
     displayCoverageOnDisplay(input) {
         const { selectionIndex } = this.props;
         const allFiles = this.props.allFiles.toJS();
-        const suspiciousness = this.props.suspiciousness
+        console.log("allFiles:");
+        console.log(allFiles);
+        console.log("selectionIndex: " + selectionIndex);
+        const suspiciousness = this.props.suspiciousness;
 
         // Return if no file container was selected
         if (selectionIndex === -1) {
-            // console.log("No file containers were selected");
+            console.log("No file containers were selected");
             return;
         }
 
@@ -892,14 +894,18 @@ class Tarantula extends Component {
             suspiciousnessScores = input;
         }
         
+        console.log("sus score");
+        console.log(suspiciousnessScores.toJS());
+
         // Filter appropriate score object using filename
-        let scoresArr = suspiciousnessScores.filter((s) => {
+        let scoresArr = suspiciousnessScores.toJS().filter((s) => {
             return s.source === fileName;
         });
         if (scoresArr.length === 0) {
             console.error("Unable to find source name");
             return;
         }
+
         let score = scoresArr[0];
         score.lines = score.lines.sort((a, b) => a.linenumber - b.linenumber)
         // Obtain list of tr nodes 
@@ -1212,6 +1218,8 @@ class Tarantula extends Component {
     onSelectCommitChanged(commitId) {
         const { selectedCommit, setSelectedCommit, setButtonGroupDisabled, setRequestingFromWorker } = this.props;
         
+        console.log("selectedCommit: " + selectedCommit);
+        console.log("commitId: " + commitId);
         // Reset only if newly selected sha is different from previous sha
         if (selectedCommit !== commitId) {
             this.resetComponent();
@@ -1526,7 +1534,7 @@ const mapStateToProps = (state) => {
         allFiles: state.getIn(['project', 'tarantula', 'allFiles']),
         
         // Selected File Container
-        selectionIndex: state.getIn(['project', 'tarantula', 'selectedIndex']),
+        selectionIndex: state.getIn(['project', 'tarantula', 'selectionIndex']),
         numberOfSvgs: state.getIn(['project', 'tarantula', 'numberOfSvgs']),
         minimapMaxHeights: state.getIn(['project', 'tarantula', 'minimapMaxHeights']),
         scrollContainerHeight: state.getIn(['project', 'tarantula', 'scrollContainerHeight']),

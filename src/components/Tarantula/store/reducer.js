@@ -53,6 +53,10 @@ export default (state = defaultState, action) => {
             return state.set('selectedCommit', action.data);
         case constants.SET_REQUESTING_FROM_WORKER:
             return state.set('isRequestingFromWorker', action.data);
+        case constants.SET_REQUESTING_COVERAGE:
+            return state.set('isRequestingCoverage', action.data)
+        case constants.SET_BUTTON_GROUP_DISABLED:
+            return state.set('isButtonGroupDisabled', action.data)
         case constants.SET_SELECTION_INDEX:
             return state.set('selectionIndex', action.data)
         case constants.SET_NUMBER_OF_SVGS:
@@ -66,9 +70,7 @@ export default (state = defaultState, action) => {
                 testcases: action.data
             })
         case constants.SET_SUSPICIOUSNESS:
-            return state.merge({
-                suspiciousness: action.data
-            })
+            return state.set('suspiciousness', action.data)
         case constants.SET_ALL_FILES:
             return state.merge({
                 allFiles: action.data
@@ -85,10 +87,10 @@ export default (state = defaultState, action) => {
             return state.set('retrievedBatches', action.data)
         case constants.SET_SUSP_DIALOG_OPENED:
             return state.set('isSuspDialogOpened', action.data)
+        case constants.SET_DIALOG_OPENED:
+            return state.set('isDialogOpened', action.data)
         case constants.SET_COVERABLE_INDEX:
             return state.set('coverableIndex', action.data)
-        case constants.SET_REQUESTING_COVERAGE:
-            return state.set('isRequestingCoverage', action.data)
         case constants.SET_VIEW_SCORES_DISABLED:
             return state.set('isViewScoresDisabled', action.data)
         default:
