@@ -1417,19 +1417,17 @@ class Tarantula extends Component {
      * @param {string} dlg The type of dialog (view or susp)
      */
     onDialogClose(dlg) {
+        const { setDialogOpened, setSuspDialogOpened } = this.props;
+        console.log("dialog closing...");
         switch(dlg) {
             case "view": {
                 // console.log("Dialog for view closed");
-                this.setState((state) => ({
-                    isDialogOpened: false
-                }));
+                setDialogOpened(false)
                 break;
             }
             case "susp": {
                 // console.log("Dialog for susp closed");
-                this.setState((state) => ({
-                    isSuspDialogOpened: false
-                }));
+                setSuspDialogOpened(false)
                 break;
             }
             default: {

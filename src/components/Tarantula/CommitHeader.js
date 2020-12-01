@@ -49,7 +49,7 @@ const CommitHeader = (props) => {
                     >
                         Submit
                     </Button>
-                </Tooltip>
+                </Tooltip>             
             </div>
 
             <div>
