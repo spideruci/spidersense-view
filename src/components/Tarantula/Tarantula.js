@@ -874,6 +874,8 @@ class Tarantula extends Component {
         console.log("allFiles:");
         console.log(allFiles);
         console.log("selectionIndex: " + selectionIndex);
+        console.log("input is: ");
+        console.log(input);
         const suspiciousness = this.props.suspiciousness;
 
         // Return if no file container was selected
@@ -895,10 +897,10 @@ class Tarantula extends Component {
         }
         
         console.log("sus score");
-        console.log(suspiciousnessScores.toJS());
+        console.log(suspiciousnessScores);
 
         // Filter appropriate score object using filename
-        let scoresArr = suspiciousnessScores.toJS().filter((s) => {
+        let scoresArr = suspiciousnessScores.filter((s) => {
             return s.source === fileName;
         });
         if (scoresArr.length === 0) {
