@@ -10,7 +10,9 @@ import "./Overview.scss";
 
 
 const Overview = (props) => {
-    const { project, commits } = props;
+    const { commits } = props;
+    const project = props.project.toJS();
+    console.log(project);
 
     return (
         <div id="overview">
