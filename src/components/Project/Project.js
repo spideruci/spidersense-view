@@ -1,4 +1,5 @@
 import React from 'react';
+import { actionCreator } from './store'
 
 import * as d3 from 'd3';
 
@@ -11,6 +12,7 @@ import Tarantula from '../Tarantula/Tarantula';
 import {spidersenseWorkerUrls} from '../../vars/vars';
 import "./../../vars/shared.scss";
 import "./Project.scss";
+import { connect } from 'react-redux';
 
 
 class Project extends React.Component {
@@ -25,21 +27,11 @@ class Project extends React.Component {
         // Variables
         this.tabs = [];
 
-        // Initialize state
-        this.state = {
-            project: {
-                projectId: props.match.params.id,
-                projectName: "",
-                projectLink: ""
-            },
-            currentTabIndex: -1,
-            backdropOpen: true
-        };
-
         // Bind methods
         this.initializeTabs = this.initializeTabs.bind(this);
         this.updateCurrentTab = this.updateCurrentTab.bind(this);
         this.populateProjectContainer = this.populateProjectContainer.bind(this);
+        this.closeBackdrop = this.closeBackdrop.bind(this);
     } 
 
     componentDidMount() {
@@ -50,7 +42,7 @@ class Project extends React.Component {
             return;
         }
 
-        this.requestProjectDetails(this.state.project.projectId);
+        this.requestProjectDetails(this.props.match.params.id);
     }
 
     /** =======================================================================
@@ -69,6 +61,9 @@ class Project extends React.Component {
      * @param {number} projectId The project id to request details from
      */
     requestProjectDetails(projectId) {
+        console.log("requesting project details");
+        const { setProject } = this.props;
+
         let url = `${spidersenseWorkerUrls.getProject}${projectId}`;
 
         fetch(url, {
@@ -82,13 +77,11 @@ class Project extends React.Component {
             let proj = projects[0];
 
             // Update state to retain projects
-            this.setState((state) => ({
-                project: {
-                    projectId: state.projectId,
-                    projectName: proj.projectName,
-                    projectLink: proj.projectLink
-                } 
-            }))
+            setProject({
+                projectId: projectId,
+                projectName: proj.projectName,
+                projectLink: proj.projectLink
+            })
 
             // Request commits
             this.requestCommits(projectId);
@@ -115,7 +108,7 @@ class Project extends React.Component {
             console.log("Callback:\n" + JSON.stringify(data));
 
             // Initialize the tabs
-            this.initializeTabs(data.builds.sort((a,b)=>Date.parse(b.timestamp) - Date.parse(a.timestamp)));
+            this.initializeTabs(data.builds.sort((a,b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)));
             this.closeBackdrop();
         }).catch((error) => {
             console.error(error);
@@ -132,10 +125,13 @@ class Project extends React.Component {
      * @param {Array} commits The list of commit objects
      */
     initializeTabs(commits) {
+        console.log("initializing");
+        // const project = this.props.project;
+
         this.tabs = [
             {
                 tabName: "Overview",
-                container: <Overview commits={commits} project={this.state.project}/>
+                container: <Overview commits={commits} project={this.props.project}/>
             },
             {
                 tabName: "Tarantula",
@@ -167,11 +163,14 @@ class Project extends React.Component {
      * @return {HTML} The DOM elements of the current tab
      */
     populateProjectContainer() {
+        console.log(this.tabs);
         if (this.tabs == null || this.tabs === undefined || this.tabs.length === 0) {
             return;
         }
 
-        return this.tabs[this.state.currentTabIndex].container;
+        const { currentTabIndex } = this.props;
+
+        return this.tabs[currentTabIndex].container;
     }
 
     /** =======================================================================
@@ -186,9 +185,9 @@ class Project extends React.Component {
      * @param {number} index The selected tab index
      */
     updateCurrentTab(index) {
-        this.setState((state) => ({
-            currentTabIndex: index
-        }));
+        const { setCurrentTabIndex } = this.props;
+
+        setCurrentTabIndex(index);
 
         let tabsContainer = d3.select(".projectTabs")
             .selectAll("div")
@@ -198,9 +197,9 @@ class Project extends React.Component {
     }
 
     closeBackdrop() {
-        this.setState((state) => ({
-            backdropOpen: false
-        }));
+        const { setBackDropOpen } = this.props
+
+        setBackDropOpen(false);
     }
 
     /** =======================================================================
@@ -213,7 +212,7 @@ class Project extends React.Component {
             <div id="project">
                 <div className="toolbar">
                     <div className="toolbarTitle">
-                        <p>{this.state.project.projectName}</p>
+                        <p>{this.props.project.projectName}</p>
                     </div>
                     <div></div>
                 </div>
@@ -226,7 +225,7 @@ class Project extends React.Component {
                     </div>
                 </div>
 
-                <Backdrop className="backdrop" open={this.state.backdropOpen}>
+                <Backdrop className="backdrop" open={this.props.backdropOpen}>
                         <CircularProgress color="inherit" />
                 </Backdrop>
             </div>
@@ -234,4 +233,26 @@ class Project extends React.Component {
      }
 }
 
-export default Project;
+const mapStateToProps = (state) => {
+    return {
+        project: state.getIn(['project', 'project', 'project']),
+        currentTabIndex: state.getIn(['project', 'project', 'currentTabIndex']),
+        backdropOpen: state.getIn(['project', 'project', 'backdropOpen'])
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        setBackDropOpen(isOpen) {
+            dispatch(actionCreator.updateBackdropOpen(isOpen))
+        },
+        setCurrentTabIndex(index) {
+            dispatch(actionCreator.updateCurrentTabIndex(index))
+        },
+        setProject(project) {
+            dispatch(actionCreator.updateProject(project))
+        }
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Project);
