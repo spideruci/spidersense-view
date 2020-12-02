@@ -8,6 +8,7 @@ const defaultState = fromJS({
         projectName: "",
         projectLink: ""
     },
+    commits: [],
     currentTabIndex: -1,
     backdropOpen: true
 });
@@ -23,6 +24,10 @@ export default (state = defaultState, action) => {
             return state.updateIn(['project', 'projectId'], (val) => project.projectId)
                         .updateIn(['project', 'projectName'], (val) => project.projectName)
                         .updateIn(['project', 'projectLink'], (val) => project.projectLink);
+        case constants.SET_COMMITS:
+            return state.merge({
+                commits: action.data
+            });
         default:
             return state;
     }

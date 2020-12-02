@@ -98,6 +98,7 @@ class Project extends React.Component {
      * @param {number} projectId The project id
      */
     requestCommits(projectId) {
+        const { setCommits } = this.props;
         let url = `${spidersenseWorkerUrls.getCommits}${projectId}`;
 
         fetch(url, {
@@ -109,6 +110,7 @@ class Project extends React.Component {
 
             // Initialize the tabs
             this.initializeTabs(data.builds.sort((a,b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)));
+            setCommits(data.builds.sort((a,b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)));
             this.closeBackdrop();
         }).catch((error) => {
             console.error(error);
@@ -163,14 +165,14 @@ class Project extends React.Component {
      * @return {HTML} The DOM elements of the current tab
      */
     populateProjectContainer() {
-        console.log(this.tabs);
-        if (this.tabs == null || this.tabs === undefined || this.tabs.length === 0) {
+        const { currentTabIndex, project } = this.props;
+        const commits = this.props.commits.toJS();
+
+        if (commits.length === 0 || currentTabIndex === -1) {
             return;
         }
 
-        const { currentTabIndex } = this.props;
-
-        return this.tabs[currentTabIndex].container;
+        return currentTabIndex === 0 ? <Overview commits={commits} project={project}/> : <Tarantula commits={commits} />;
     }
 
     /** =======================================================================
@@ -235,6 +237,7 @@ class Project extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
+        commits: state.getIn(['project', 'project', 'commits']),
         project: state.getIn(['project', 'project', 'project']),
         currentTabIndex: state.getIn(['project', 'project', 'currentTabIndex']),
         backdropOpen: state.getIn(['project', 'project', 'backdropOpen'])
@@ -251,6 +254,9 @@ const mapDispatchToProps = (dispatch) => {
         },
         setProject(project) {
             dispatch(actionCreator.updateProject(project))
+        },
+        setCommits(commits) {
+            dispatch(actionCreator.updateCommits(commits))
         }
     }
 }

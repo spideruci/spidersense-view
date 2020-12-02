@@ -15,3 +15,8 @@ export const updateCurrentTabIndex = (index) => ({
     type: constants.SET_CURRENT_TAB_INDEX,
     data: index
 })
+
+export const updateCommits = (commits) => ({
+    type: constants.SET_COMMITS,
+    data: fromJS(commits)
+})
