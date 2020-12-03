@@ -101,6 +101,24 @@ const aboutPageDetails = {
             description: "A graduate student who is part of the Master of Software Engineering program at UCI (Class of 2020), Thuc enjoys designing and implementing application for both web and mobile platforms. He hopes to pursue a career as a Full-stack engineer in the near future.",
             imagePath: "images/profile_thuc_nguyen.jpg"
         },
+        {
+            name: "Jing Chen",
+            position: "Frontend Developer",
+            description: "Graduate Student of UCI Master of Software Engineering (c.o 2020)",
+            imagePath: "images/profile_jing_chen.jpeg"
+        },
+        {
+            name: "Marc Andrada",
+            position: "Backend Developer",
+            description: "Graduate Student of UCI Master of Software Engineering (c.o 2020)",
+            imagePath: "images/profile_marc_andrada.jpeg"
+        },
+        {
+            name: "Weihuan Fu",
+            position: "Frontend Developer",
+            description: "Graduate Student of UCI Master of Software Engineering (c.o 2020)",
+            imagePath: "images/profile_weihuan_fu.jpg"
+        },
     ]
 };
 export {aboutPageDetails};
