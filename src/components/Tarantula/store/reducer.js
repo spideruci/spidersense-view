@@ -7,7 +7,8 @@ const defaultState = fromJS({
 
     // All files
     allFiles: [],
-
+    allFileNames: [],
+    
     // Selected File Container
     selectionIndex: -1,
     numberOfSvgs: 0,
@@ -38,6 +39,7 @@ export default (state = defaultState, action) => {
         case constants.RESET_COMPONENT:
             return state.set('selectedCommit', '')
                     .set('allFiles', [])
+                    .set('allFileNames', [])
                     .set('selectionIndex', -1)
                     .set('numberOfSvgs', 0)
                     .set('minimapMaxHeights', [])
@@ -75,6 +77,8 @@ export default (state = defaultState, action) => {
             return state.merge({
                 allFiles: action.data
             })
+        case constants.SET_ALL_FILE_NAMES:
+            return state.set('allFileNames', action.data)
         case constants.SET_ALL_FORMATED_TESTS_MAP:
             return state.merge({
                 allFormatedTestsMap: action.data

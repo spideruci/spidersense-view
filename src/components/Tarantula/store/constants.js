@@ -4,6 +4,7 @@ export const SET_REQUESTING_FROM_WORKER = 'project/tarantula/set_requesting_from
 export const SET_REQUESTING_COVERAGE = 'project/tarantula/set_requesting_coverage';
 export const SET_BUTTON_GROUP_DISABLED = 'project/tarantula/set_button_group_disabled';
 export const SET_ALL_FILES = 'project/tarantula/set_all_files';
+export const SET_ALL_FILE_NAMES = 'project/tarantula/set_all_file_names';
 export const SET_SELECTION_INDEX = 'project/tarantula/set_selection_index';
 export const SET_NUMBER_OF_SVGS = 'project/tarantula/set_number_of_svgs';
 export const SET_MINIMAP_MAX_HEIGHTS = 'project/tarantula/set_minimap_max_heights';

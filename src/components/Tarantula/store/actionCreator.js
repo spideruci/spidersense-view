@@ -32,6 +32,11 @@ export const updateAllFiles = (files) => ({
     data: fromJS(files)
 })
 
+export const updateAllFileNames = (fileNames) => ({
+    type: constants.SET_ALL_FILE_NAMES,
+    data: fromJS(fileNames)
+})
+
 export const updateSelectionIndex = (index) => ({
     type: constants.SET_SELECTION_INDEX,
     data: index
