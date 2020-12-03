@@ -11,10 +11,11 @@ const CodeContainer = (props) => {
             {
                 isRequestingCoverage &&
                 <div id="linearProgress">
-                    <div>
+                    {/* <div>
                         <CircularProgress color="secondary" />
                         <div id='loadingAllTests'>loading all tests</div>
-                    </div>
+                    </div> */}
+                    <div id='loadingAllTests'>Loading all tests</div>
                     <ProgressBar data={loadingProgress} />
                 </div>
             }

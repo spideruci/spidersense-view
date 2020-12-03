@@ -141,7 +141,7 @@ class Tarantula extends Component {
                 return data;
             });
         })).then((fileTexts) => {
-            console.log('Callback:\n', fileTexts);
+            // console.log('Callback:\n', fileTexts);
 
             // Generate file container
             const numberOfFileContainers = fileTexts.length;
@@ -199,8 +199,8 @@ class Tarantula extends Component {
             // console.log("Callback:\n" + JSON.stringify(data));
 
             this.generateDirectoryView(data);
-            this.requestAllCoverage();
             setRequestingFromWorker(false)
+            this.requestAllCoverage();
         }).catch((error) => {
             console.error(error);
             setRequestingFromWorker(false)
@@ -243,7 +243,7 @@ class Tarantula extends Component {
         }
         setRequestingCoverage(true)
         setTotalBatches(tests.length)
-        
+        console.log(tests.length)
         Promise.all(tests.map((batch) => {
             var formdata = new FormData();
             formdata.append("tlist", batch);
@@ -254,12 +254,9 @@ class Tarantula extends Component {
             };            
             return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
             .then(response => {
-                setRetrievedBatches(retrievedBatches + 1)
+                setRetrievedBatches(this.props.retrievedBatches + 1)
                 return response.json();
             })
-            // .then((data) => {
-            //     return data;
-            // });
         })).then(responses => {
             let suspiciousnessScores = [];
             let formatedTests = [];
@@ -282,7 +279,7 @@ class Tarantula extends Component {
             }
             // Update state to retain scores
             setAllFormatedTestMap(allFormatedTests);
-            setRetrievedBatches(retrievedBatches + 1)
+            // setRetrievedBatches(this.props.retrievedBatches + 1)
         })
         .then((res)=> {
             setRequestingCoverage(false)
