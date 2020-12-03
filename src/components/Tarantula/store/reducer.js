@@ -40,6 +40,8 @@ export default (state = defaultState, action) => {
             return state.set('selectedCommit', '')
                     .set('allFiles', [])
                     .set('allFileNames', [])
+                    .set('totalBatches', -1)
+                    .set('retrievedBatches', 0)
                     .set('selectionIndex', -1)
                     .set('numberOfSvgs', 0)
                     .set('minimapMaxHeights', [])
