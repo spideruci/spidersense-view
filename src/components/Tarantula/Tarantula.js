@@ -77,6 +77,7 @@ class Tarantula extends Component {
 
         this.generateViewDialog = this.generateViewDialog.bind(this);
         this.generateSuspDialog = this.generateSuspDialog.bind(this);
+        this.removeExistingCoverage = this.removeExistingCoverage.bind(this);
     } 
 
     componentDidMount() {
@@ -917,7 +918,7 @@ class Tarantula extends Component {
             .select("tbody")
             .selectAll("tr")
             .nodes();
-        
+
         // For each line number in score.lines, change background color of appropriate row
         for (let i = 0; i < score.lines.length; i++) {
             let lineObject = score.lines[i];
