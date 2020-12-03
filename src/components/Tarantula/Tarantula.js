@@ -2,6 +2,7 @@ import React, { Component, createRef } from 'react';
 import { connect } from 'react-redux';
 
 import { actionCreator } from './store';
+import { List } from 'immutable'
 
 import CommitHeader from './CommitHeader'
 import TestDirectory from './TestDirectory'
@@ -891,7 +892,7 @@ class Tarantula extends Component {
         let fileName = allFiles[selectionIndex].name;
         let suspiciousnessScores;
         if (input === undefined) {
-            suspiciousnessScores = suspiciousness;
+            suspiciousnessScores = List.isList(suspiciousness) ? suspiciousness.toJS() : suspiciousness;
         } else {
             suspiciousnessScores = input;
         }
