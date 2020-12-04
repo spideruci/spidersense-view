@@ -1600,6 +1600,7 @@ class Tarantula extends Component {
                             <Button
                                 variant="contained"
                                 color="primary"
+                                disabled={this.state.isRequestingCoverage}
                                 style={{ marginLeft: this.SUBMIT_MARGIN }}
                                 onClick={() => this.requestCoverage()}
                             >
