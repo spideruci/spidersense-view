@@ -59,6 +59,8 @@ class Tarantula extends Component {
 
             // Active test cases
             testcases: [],
+            totalBatches: -1,
+            retrievedBatches: 0,
 
             // Fault localization
             suspiciousness: [],
@@ -274,7 +276,9 @@ class Tarantula extends Component {
         }
         // console.log(tests);
         this.setState((state) => ({
-            isRequestingCoverage: true
+            isRequestingCoverage: true,
+            totalBatches: tests.length,
+            retrievedBatches: 0
         }));
         
         Promise.all(tests.map((batch) => {
@@ -287,6 +291,10 @@ class Tarantula extends Component {
             };            
             return fetch(spidersenseWorkerUrls.batchTestcaseCoverage, requestOptions)
             .then(response => {
+                this.setState((state) => ({
+                    retrievedBatches: this.state.retrievedBatches + 1 
+                }))
+                console.log("download percentage: " + (this.state.retrievedBatches / this.state.totalBatches) * 100 + "%");
                 return response.json();
             })
             // .then((data) => {
@@ -315,7 +323,8 @@ class Tarantula extends Component {
             // Update state to retain scores
             console.log(allFormatedTests)
             this.setState((state) => ({
-                allFormatedTestsMap: allFormatedTests
+                allFormatedTestsMap: allFormatedTests,
+                retrievedBatches: this.state.retrievedBatches + 1
             }));
         })
         .then((res)=> {
@@ -1649,7 +1658,8 @@ class Tarantula extends Component {
                         {
                             this.state.isRequestingCoverage &&
                             <div id="linearProgress">
-                                <LinearDeterminate />
+                                <div id='loadingAllTests'>Loading all tests</div>
+	                            <LinearDeterminate data={this.state.retrievedBatches / this.state.totalBatches}/>
                             </div>
                         }
                         <div id="scrollContainer"></div>
