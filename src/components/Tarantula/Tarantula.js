@@ -82,6 +82,8 @@ class Tarantula extends Component {
 
     componentDidMount() {
         const { commits } = this.props
+        this.resetComponent()
+
         if (commits.length !== 0) {
             this.onSelectCommitChanged(commits[0].commitId);
         }
