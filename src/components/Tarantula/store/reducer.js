@@ -74,13 +74,17 @@ export default (state = defaultState, action) => {
                 testcases: action.data
             })
         case constants.SET_SUSPICIOUSNESS:
-            return state.set('suspiciousness', action.data)
+            return state.merge({
+                suspiciousness: action.data
+            })
         case constants.SET_ALL_FILES:
             return state.merge({
                 allFiles: action.data
             })
         case constants.SET_ALL_FILE_NAMES:
-            return state.set('allFileNames', action.data)
+            return state.merge({
+                allFileNames: action.data
+            })
         case constants.SET_ALL_FORMATED_TESTS_MAP:
             return state.merge({
                 allFormatedTestsMap: action.data

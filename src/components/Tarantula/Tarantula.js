@@ -871,14 +871,14 @@ class Tarantula extends Component {
      * highlight lines of selected file based on suspiciousness data.
      */
     displayCoverageOnDisplay(input) {
-        const { selectionIndex } = this.props;
+        const { selectionIndex, setSuspicousness } = this.props;
         const allFiles = this.props.allFiles.toJS();
         console.log("allFiles:");
         console.log(allFiles);
         console.log("selectionIndex: " + selectionIndex);
         console.log("input is: ");
         console.log(input);
-        const suspiciousness = this.props.suspiciousness;
+        let suspiciousness = this.props.suspiciousness;
 
         // Return if no file container was selected
         if (selectionIndex === -1) {
@@ -912,6 +912,9 @@ class Tarantula extends Component {
 
         let score = scoresArr[0];
         score.lines = score.lines.sort((a, b) => a.linenumber - b.linenumber)
+
+        // dispatch an action to set ORDERED susp score
+        setSuspicousness(suspiciousnessScores);
         // Obtain list of tr nodes 
         let rows = d3.select("#scrollContainer")
             .select("table")
