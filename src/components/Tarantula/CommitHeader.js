@@ -16,15 +16,12 @@ const CommitHeader = (props) => {
     const { 
         onClearOrAllButtonClicked,
         onPassedOrFailedButtonClicked,
-        requestCoverage,
         onViewScoresClicked,
         onSelectCommitChanged,
-        isRequestingCoverage,
         isViewScoresDisabled,
         isButtonGroupDisabled,
         selectedCommit,
         commits,
-        submitMarginLeft,
         commitWrapper
     } = props;
     
@@ -39,17 +36,6 @@ const CommitHeader = (props) => {
                     <Button className="directoryButton" onClick={(e) => onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
                     <Button className="directoryButton" onClick={(e) => onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
                 </ButtonGroup>
-                <Tooltip title="get coverage">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        disabled={isRequestingCoverage}
-                        style={{ marginLeft: submitMarginLeft }}
-                        onClick={requestCoverage}
-                    >
-                        Submit
-                    </Button>
-                </Tooltip>             
             </div>
 
             <div>

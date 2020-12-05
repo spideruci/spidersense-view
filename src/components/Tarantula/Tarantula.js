@@ -507,7 +507,9 @@ class Tarantula extends Component {
                 this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
             });
         d3.selectAll(".testcase input")
-            .on('click');
+            .on('click', () => {
+                this.requestCoverage();
+            });
     }
 
     /** =======================================================================
@@ -1274,6 +1276,7 @@ class Tarantula extends Component {
                 return currentTestcases.includes(d3.select(this).attr("key"));
             })
             .property("checked", checked);
+        this.requestCoverage();
     }
 
     /**
@@ -1348,6 +1351,7 @@ class Tarantula extends Component {
         d3.selectAll(".testcase")
             .select("input")
             .property("checked", checkAll);
+        this.requestCoverage();
     }
 
     /**
@@ -1381,7 +1385,7 @@ class Tarantula extends Component {
             .filter(function(d, i) {
                 return testcaseIds.includes(d3.select(this).attr("key"));
             })
-            .property("checked", true);;
+            .property("checked", true);
         
         // (Exlucded checkboxes) For checkboxes whose id is not included in testcaseIds, uncheck
         d3.selectAll(".testcase")
@@ -1389,7 +1393,8 @@ class Tarantula extends Component {
             .filter(function(d, i) {
                 return !testcaseIds.includes(d3.select(this).attr("key"));
             })
-            .property("checked", false);;
+            .property("checked", false);
+        this.requestCoverage();
     }
 
     /**
@@ -1467,15 +1472,12 @@ class Tarantula extends Component {
                 <CommitHeader 
                     onClearOrAllButtonClicked={this.onClearOrAllButtonClicked}
                     onPassedOrFailedButtonClicked={this.onPassedOrFailedButtonClicked}
-                    requestCoverage={this.requestCoverage}
                     onViewScoresClicked={this.onViewScoresClicked}
                     onSelectCommitChanged={this.onSelectCommitChanged}
-                    isRequestingCoverage={isRequestingCoverage}
                     isViewScoresDisabled={isViewScoresDisabled}
                     isButtonGroupDisabled={isButtonGroupDisabled}
                     selectedCommit={selectedCommit}
                     commits={commits}
-                    submitMarginLeft={this.SUBMIT_MARGIN}
                     commitWrapper={this.commitWrapper}
                 />
                 <div id="tarantulaWrapper">
