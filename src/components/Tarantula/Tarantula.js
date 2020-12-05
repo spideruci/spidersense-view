@@ -640,7 +640,11 @@ class Tarantula extends Component {
                 this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
             });
         d3.selectAll(".testcase input")
-            .on('click');
+            .on('click', () => {
+                console.log(d3.event.target.getAttribute("key"));
+                this.requestCoverage();
+                // this.onSourceNameChecked(d3.event.target.getAttribute("key"), d3.event.target.checked);
+            });
     }
 
     /** =======================================================================
@@ -1402,6 +1406,7 @@ class Tarantula extends Component {
                 return testcases.includes(d3.select(this).attr("key"));
             })
             .property("checked", checked);
+        this.requestCoverage();
     }
 
     /**
@@ -1479,6 +1484,7 @@ class Tarantula extends Component {
         d3.selectAll(".testcase")
             .select("input")
             .property("checked", checkAll);
+        this.requestCoverage();
     }
 
     /**
@@ -1512,7 +1518,7 @@ class Tarantula extends Component {
             .filter(function(d, i) {
                 return testcaseIds.includes(d3.select(this).attr("key"));
             })
-            .property("checked", true);;
+            .property("checked", true);
         
         // (Exlucded checkboxes) For checkboxes whose id is not included in testcaseIds, uncheck
         d3.selectAll(".testcase")
@@ -1520,7 +1526,8 @@ class Tarantula extends Component {
             .filter(function(d, i) {
                 return !testcaseIds.includes(d3.select(this).attr("key"));
             })
-            .property("checked", false);;
+            .property("checked", false);
+        this.requestCoverage();
     }
 
     /**
@@ -1596,7 +1603,7 @@ class Tarantula extends Component {
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(true, e)}>Passed</Button>
                             <Button className="directoryButton" onClick={(e) => this.onPassedOrFailedButtonClicked(false, e)}>Failed</Button>
                         </ButtonGroup>
-                        <Tooltip title="get coverage">
+                        {/* <Tooltip title="get coverage">
                             <Button
                                 variant="contained"
                                 color="primary"
@@ -1606,7 +1613,7 @@ class Tarantula extends Component {
                             >
                                 Submit
                             </Button>
-                        </Tooltip>
+                        </Tooltip> */}
                     </div>
 
                     <div>
