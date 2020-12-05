@@ -212,7 +212,8 @@ class Tarantula extends Component {
 
     requestAllCoverage() {
         const { 
-            setRequestingCoverage, 
+            setRequestingCoverage,
+            setButtonGroupDisabled, 
             setTotalBatches, 
             setRetrievedBatches,
             setAllFormatedTestMap,
@@ -285,7 +286,8 @@ class Tarantula extends Component {
             // setRetrievedBatches(this.props.retrievedBatches + 1)
         })
         .then((res)=> {
-            setRequestingCoverage(false)
+            setRequestingCoverage(false);
+            setButtonGroupDisabled(false);
         })
         .catch((error) => {
             console.error(error);
@@ -1241,7 +1243,7 @@ class Tarantula extends Component {
         setRequestingFromWorker(true)
 
         // Enable or disable the button group
-        setButtonGroupDisabled(false);
+        setButtonGroupDisabled(true);
         
         // Request urls to the source files for current commit
         this.requestSourceLinks(commitId);
