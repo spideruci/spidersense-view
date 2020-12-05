@@ -218,8 +218,6 @@ class Tarantula extends Component {
             setRetrievedBatches,
             setAllFormatedTestMap,
             retrievedBatches } = this.props;
-        const allFiles = this.props.allFiles.toJS();
-        const allFileNames = this.props.allFileNames.toJS();
 
         // Get the test ids of activated (checked) tests 
         let allTestCases = d3.selectAll(".testcase")
@@ -262,24 +260,16 @@ class Tarantula extends Component {
                 return response.json();
             })
         })).then(responses => {
-            let suspiciousnessScores = [];
-            let formatedTests = [];
             let allFormatedTests = {};
             for (let i = 0; i < responses.length; i++) {
                 let result = responses[i]
                 // console.log(result)
                 let testList = tests[i].split(',')
-                formatedTests = testList.map(e => {
+                testList.map(e => {
                     allFormatedTests['t' + e] = {testcases: result['t' + e]};
                     return {testcases: result['t' + e]};
                 })
                 // console.log(testList)
-                // let fileNames = allFiles.map((f) => {
-                //     return f.name;
-                // });
-                let susp2 = new SuspiciousnessV2();
-                let output = susp2.computeSuspiciousness(formatedTests, allFileNames);
-                suspiciousnessScores = suspiciousnessScores.concat(...output)
             }
             // Update state to retain scores
             setAllFormatedTestMap(allFormatedTests);
@@ -295,9 +285,8 @@ class Tarantula extends Component {
     }
 
     requestCoverage() {
-        const allFiles = this.props.allFiles.toJS()
         const allFileNames = this.props.allFileNames.toJS();
-        const allFormatedTestsMap = this.props.allFormatedTestsMap.toJS()
+        const allFormatedTestsMap = this.props.allFormatedTestsMap.toJS();
         const { setSuspicousness } = this.props;
 
         this.removeExistingCoverage();
@@ -319,9 +308,6 @@ class Tarantula extends Component {
         // console.log("Activated tests: " + activatedTestCases);
         let formatedTests = activatedTestCases.map((key)=> allFormatedTestsMap['t' + key]);
         let susp2 = new SuspiciousnessV2();
-        // let fileNames = allFiles.map((f) => {
-        //     return f.name;
-        // });
         let output = susp2.computeSuspiciousness(formatedTests, allFileNames);
         // Update state to retain scores
         setSuspicousness(output)
@@ -879,11 +865,11 @@ class Tarantula extends Component {
     displayCoverageOnDisplay(input) {
         const { selectionIndex, setSuspicousness } = this.props;
         const allFiles = this.props.allFiles.toJS();
-        console.log("allFiles:");
-        console.log(allFiles);
-        console.log("selectionIndex: " + selectionIndex);
-        console.log("input is: ");
-        console.log(input);
+        // console.log("allFiles:");
+        // console.log(allFiles);
+        // console.log("selectionIndex: " + selectionIndex);
+        // console.log("input is: ");
+        // console.log(input);
         let suspiciousness = this.props.suspiciousness;
 
         // Return if no file container was selected
@@ -905,7 +891,7 @@ class Tarantula extends Component {
         }
         
         console.log("sus score");
-        console.log(suspiciousnessScores);
+        // console.log(suspiciousnessScores);
 
         // Filter appropriate score object using filename
         let scoresArr = suspiciousnessScores.filter((s) => {
