@@ -16,6 +16,9 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 1. [react-router-dom](https://www.npmjs.com/package/react-router-dom)
 1. [react-cookie](https://www.npmjs.com/package/react-cookie)
+1. [immutable](https://www.npmjs.com/package/immutable)
+1. [react-redux](https://www.npmjs.com/package/react-redux)
+1. [redux-thunk](https://www.npmjs.com/package/redux-thunk)
 1. [@material-ui/icons](https://www.npmjs.com/package/@material-ui/icons)  
 1. [@material-ui/core](https://www.npmjs.com/package/@material-ui/core)
 1. [D3](https://www.npmjs.com/package/d3)
@@ -36,17 +39,38 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 ## Installing the Dependencies
 Note: Check the links to the corresponding packages for more up-to-date instructions
 
-`npm i react-router-dom`  
-`npm i react-cookie`  
+`npm i react-router-dom`
+
+`npm i react-cookie`
+
+`npm i react-redux`
+
+`npm i redux-thunk`
+
+`npm i immutable`
+
 `npm i @material-ui/icons`  
-`npm i @material-ui/core`  
+
+`npm i @material-ui/core` 
+
 `npm i d3`  
+
+## React-Redux
+
+SpiderSense View is using [react-redux](https://www.npmjs.com/package/react-redux) as the state management tool. Major components such as Tarantula have their own [stores](https://redux.js.org/api/store) and [reducers](https://redux.js.org/faq/reducers#reducers) to control data, and the root component is using [combineReducers()](https://redux.js.org/recipes/structuring-reducers/initializing-state#combined-reducers) to track state change of each component. 
+
+[Immutable](https://www.npmjs.com/package/immutable) is used to save/update states in the store so that every update of state is done immutably(create copies and modify copies)
+
+Refer to the [redux official website](https://react-redux.js.org/) to learn more.
+
+![redux-dataflow](docs/ReduxDataFlowDiagram.gif)
 
 ## Tarantula
 
 The Tarantula component is a large and complicated file. Many of the state variables and methods in that class are used to request data from the SpiderSense-worker backend, bind that data to elements on the interface, and  dynamically generate those elements using D3. Most of the files and methods are documented, but to make understanding this part of the frontend easier, a diagram of the architecture of this component is included.  
 
-The diagram can be found under the **/docs** directory and contains both JPEG and SVG formats.  
+The diagram can be found under the **/docs** directory and contains both JPEG and SVG formats.
+
 
 ## Tarantula diagram:
 
