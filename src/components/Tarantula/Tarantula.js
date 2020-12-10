@@ -894,13 +894,12 @@ class Tarantula extends Component {
     generateViewDialog() {
         const { isDialogOpened, 
                 selectionIndex } = this.props;
-        const suspiciousness = this.props.suspiciousness.toJS()
-        const allFiles = this.props.allFiles.toJS()
-
         // Return if no file containers were selected
         if (!isDialogOpened || selectionIndex === -1) {
             return;
         }
+        const suspiciousness = this.props.suspiciousness.toJS()
+        const allFiles = this.props.allFiles.toJS()
 
         // Remove any previous dialog content
         d3.select("#dialogScoresContainer").selectAll("*").remove();

@@ -49,7 +49,7 @@ export default (state = defaultState, action) => {
                     .set('testcases', [])
                     .set('suspiciousness', [])
                     .set('isButtonGroupDisabled', true)
-                    .set('isButtonGroupDisabled', true)
+                    .set('isViewScoresDisabled', true)
                     .set('isDialogOpened', false)
                     .set('isSuspDialogOpened', false)
                     .set('coverableIndex', -1)
