@@ -3,7 +3,6 @@ import {fromJS} from "immutable";
 
 const defaultState = fromJS({
     project: {
-        // projectId: props.match.params.id,
         projectId: -1,
         projectName: "",
         projectLink: ""

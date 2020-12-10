@@ -35,8 +35,6 @@ class Project extends React.Component {
     } 
 
     componentDidMount() {
-        // console.log("Match params id: " + props.match.params.id);
-
         // Don't request details if no project id parameter
         if (this.props.match.params == null) {
             return;
