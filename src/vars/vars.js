@@ -3,6 +3,7 @@
  ======================================================================= */
  // Uncomment to use the urls locally
  
+ /*
 const spidersenseWorkerUrls = {
     getAllProjects: "http://127.0.01:5000/getAllProjects ",
     getProject: "http://127.0.0.1:5000/getProject/",            // Param: <projectId>
@@ -14,9 +15,10 @@ const spidersenseWorkerUrls = {
     commitCoverage: "http://127.0.0.1:5000/commitCoverage/"     // Param: <testcaseId>
 };
 export {spidersenseWorkerUrls};
+*/
 
 // Uncomment for production (on anthill)
-/*
+
  const spidersenseWorkerUrls = {
     getAllProjects: "/api/getAllProjects ",
     getProject: "/api/getProject/",            // Param: <projectId>
@@ -24,10 +26,11 @@ export {spidersenseWorkerUrls};
     getSourceInfo: "/api/getSourceInfo/",      // Param: <commitId>
     getAllTestcases: "/api/getAllTestcases/",    // Param: <commitId>
     testcaseCoverage: "/api/testcaseCoverage/", // Param: <testcaseId>
+    batchTestcaseCoverage: "/api/batchTestcaseCoverage", // Body: {tlist: '12345,12346'}
     commitCoverage: "/api/commitCoverage/"     // Param: <testcaseId>
 };
 export {spidersenseWorkerUrls};
-*/
+
 
 /** =======================================================================
  * ChooseProject Component
